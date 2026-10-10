@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Pagina no encontrada — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
+{% block content %}
+<section class="section error-page">
+  <div class="container container-narrow" style="text-align:center">
+    <p class="error-code">404</p>
+    <h1>La pagina que busca no existe</h1>
+    <p>Puede que el enlace este roto o que la pagina haya sido movida.</p>
+    <a class="btn btn-primary" href="{{ url_for('public.index') }}">Volver al inicio</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Contacto — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <nav class="breadcrumbs"><a href="{{ url_for('public.index') }}">Inicio</a> <span>/</span> Contacto</nav>
+    <h1>Contacto</h1>
+    <p>Estamos listos para atender sus solicitudes. «Trabajamos con actitud positiva, compromiso y dedicacion para servirle siempre».</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container contact-grid">
+    <div class="contact-form-card">
+      <h2>Ecribenos</h2>
+      <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Nombre *</label>
+            <input class="form-control" type="text" id="name" name="name" value="{{ form.get('name', '') }}" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">Telefono</label>
+            <input class="form-control" type="tel" id="phone" name="phone" value="{{ form.get('phone', '') }}">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Correo electronico</label>
+            <input class="form-control" type="email" id="email" name="email" value="{{ form.get('email', '') }}">
+          </div>
+          <div class="form-group">
+            <label for="subject">Asunto</label>
+            <input class="form-control" type="text" id="subject" name="subject" value="{{ form.get('subject', '') }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="message">Mensaje *</label>
+          <textarea class="form-control" id="message" name="message" rows="6" required>{{ form.get('message', '') }}</textarea>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Enviar mensaje</button>
+      </form>
+    </div>
+
+    <aside class="contact-aside">
+      <div class="contact-card">
+        <h3>Directo con nosotros</h3>
+        <ul class="footer-contact">
+          {% if settings.get('phone') %}
+          <li><svg class="icon"><use href="/static/img/icons.svg#phone"></use></svg>
+            <a href="tel:{{ settings.get('phone') | replace(' ', '') }}">{{ settings.get('phone') }}</a></li>
+          {% endif %}
+          {% if settings.get('phone2') %}
+          <li><svg class="icon"><use href="/static/img/icons.svg#phone"></use></svg>
+            <a href="tel:{{ settings.get('phone2') | replace(' ', '') }}">{{ settings.get('phone2') }}</a></li>
+          {% endif %}
+          {% for key in ['email_general', 'email_ventas', 'email_soporte', 'email_infosoporte'] %}
+            {% if settings.get(key) %}
+            <li><svg class="icon"><use href="/static/img/icons.svg#mail"></use></svg>
+              <a href="mailto:{{ settings.get(key) }}">{{ settings.get(key) }}</a></li>
+            {% endif %}
+          {% endfor %}
+          {% if settings.get('address') %}
+          <li><svg class="icon"><use href="/static/img/icons.svg#pin"></use></svg><span>{{ settings.get('address') }}</span></li>
+          {% endif %}
+          {% if settings.get('schedule') %}
+          <li><svg class="icon"><use href="/static/img/icons.svg#clock"></use></svg><span>{{ settings.get('schedule') }}</span></li>
+          {% endif %}
+        </ul>
+        <a class="btn btn-whatsapp btn-block" href="{{ wa('Hola, escribo desde la pagina de contacto de su sitio web.') }}" target="_blank" rel="noopener">
+          <svg class="icon"><use href="/static/img/icons.svg#whatsapp"></use></svg> Chatear por WhatsApp
+        </a>
+      </div>
+
+      <div class="contact-card">
+        <h3>Otras opciones</h3>
+        <ul class="quick-links">
+          <li><a href="{{ url_for('public.certificados') }}">Busca tu certificado</a></li>
+          <li><a href="{{ url_for('public.soporte') }}">Centro de soporte tecnico</a></li>
+          <li><a href="{{ url_for('public.alquiler') }}">Alquiler de equipos</a></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}

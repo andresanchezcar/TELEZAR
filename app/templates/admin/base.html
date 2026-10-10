@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Administracion{% endblock %} — Telezar</title>
+  <link rel="icon" href="{{ settings.get('favicon', '/static/img/logo.png') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar">
+      <a class="sidebar-brand" href="{{ url_for('admin.dashboard') }}">
+        <img src="{{ settings.get('site_logo') or url_for('static', filename='img/logo.png') }}" alt="Telezar">
+        <span>Panel Telezar</span>
+      </a>
+
+      <nav class="sidebar-nav">
+        <p class="sidebar-label">General</p>
+        <a class="side-link {{ 'active' if request.endpoint == 'admin.dashboard' }}" href="{{ url_for('admin.dashboard') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#grid"></use></svg> Dashboard
+        </a>
+        <a class="side-link {{ 'active' if request.endpoint == 'admin.messages' }}" href="{{ url_for('admin.messages') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#mail"></use></svg> Mensajes
+          {% if stats_no_leidos is defined and stats_no_leidos %}<span class="side-badge">{{ stats_no_leidos }}</span>{% endif %}
+        </a>
+
+        <p class="sidebar-label">Contenido</p>
+        <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'paginas' }}" href="{{ url_for('admin.entity_list', entity_key='paginas') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#file"></use></svg> Paginas
+        </a>
+        <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'servicios' }}" href="{{ url_for('admin.entity_list', entity_key='servicios') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#tools"></use></svg> Servicios
+        </a>
+        <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'productos' }}" href="{{ url_for('admin.entity_list', entity_key='productos') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#box"></use></svg> Productos
+        </a>
+        <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'categorias' }}" href="{{ url_for('admin.entity_list', entity_key='categorias') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#tag"></use></svg> Categorias
+        </a>
+        <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'marcas' }}" href="{{ url_for('admin.entity_list', entity_key='marcas') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#star"></use></svg> Marcas
+        </a>
+        <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'certificados' }}" href="{{ url_for('admin.entity_list', entity_key='certificados') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#cert"></use></svg> Certificados
+        </a>
+        <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'galeria' }}" href="{{ url_for('admin.entity_list', entity_key='galeria') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#image"></use></svg> Galeria
+        </a>
+
+        <p class="sidebar-label">Sistema</p>
+        <a class="side-link {{ 'active' if request.endpoint == 'admin.settings' }}" href="{{ url_for('admin.settings') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#gear"></use></svg> Ajustes
+        </a>
+        <a class="side-link {{ 'active' if request.endpoint == 'admin.profile' }}" href="{{ url_for('admin.profile') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#user"></use></svg> Mi perfil
+        </a>
+        <a class="side-link" href="{{ url_for('public.index') }}" target="_blank" rel="noopener">
+          <svg class="icon"><use href="/static/img/icons.svg#external"></use></svg> Ver sitio
+        </a>
+      </nav>
+
+      <form class="sidebar-logout" method="post" action="{{ url_for('auth.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="side-link" type="submit">
+          <svg class="icon"><use href="/static/img/icons.svg#logout"></use></svg> Cerrar sesion
+        </button>
+      </form>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu">
+          <svg class="icon"><use href="/static/img/icons.svg#menu"></use></svg>
+        </button>
+        <h1 class="admin-page-title">{% block admin_title %}Dashboard{% endblock %}</h1>
+        <div class="admin-user">
+          <span class="avatar">{{ (current_user.full_name or current_user.username)[:1] | upper }}</span>
+          <span class="admin-user-name">{{ current_user.full_name or current_user.username }}</span>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+          <div class="flash-stack">
+            {% for category, msg in messages %}
+            <div class="flash flash-{{ category }}">
+              <span>{{ msg }}</span>
+              <button class="flash-close" aria-label="Cerrar">&times;</button>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block admin_content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
