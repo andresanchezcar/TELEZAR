@@ -1,0 +1,24 @@
+{% extends "admin/base.html" %}
+{% block title %}Mensaje de {{ msg.name }}{% endblock %}
+{% block admin_title %}Mensaje de {{ msg.name }}{% endblock %}
+
+{% block admin_content %}
+<div class="panel">
+  <div class="message-meta">
+    <div><span class="muted">De:</span> <strong>{{ msg.name }}</strong></div>
+    {% if msg.email %}<div><span class="muted">Correo:</span> <a href="mailto:{{ msg.email }}">{{ msg.email }}</a></div>{% endif %}
+    {% if msg.phone %}<div><span class="muted">Telefono:</span> <a href="tel:{{ msg.phone }}">{{ msg.phone }}</a></div>{% endif %}
+    {% if msg.subject %}<div><span class="muted">Asunto:</span> {{ msg.subject }}</div>{% endif %}
+    <div><span class="muted">Recibido:</span> {{ msg.created_at.strftime('%d/%m/%Y a las %H:%M') }}</div>
+  </div>
+  <hr>
+  <div class="rich-text"><p>{{ msg.message }}</p></div>
+  <div class="form-actions">
+    {% if msg.email %}
+    <a class="btn btn-primary" href="mailto:{{ msg.email }}?subject=Re: {{ msg.subject or 'Su solicitud con Telezar' }}">Responder por correo</a>
+    {% endif %}
+    <a class="btn btn-whatsapp" href="https://wa.me/{{ (settings.get('whatsapp') or '').replace('+','').replace(' ','') }}" target="_blank" rel="noopener">Abrir WhatsApp</a>
+    <a class="btn btn-outline" href="{{ url_for('admin.messages') }}">Volver</a>
+  </div>
+</div>
+{% endblock %}

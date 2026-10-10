@@ -1,0 +1,84 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block admin_title %}Dashboard{% endblock %}
+
+{% block admin_content %}
+<div class="stat-grid">
+  <a class="stat-card" href="{{ url_for('admin.entity_list', entity_key='paginas') }}">
+    <span class="stat-icon"><svg class="icon"><use href="/static/img/icons.svg#file"></use></svg></span>
+    <span class="stat-value">{{ stats.paginas }}</span>
+    <span class="stat-label">Paginas</span>
+  </a>
+  <a class="stat-card" href="{{ url_for('admin.entity_list', entity_key='servicios') }}">
+    <span class="stat-icon"><svg class="icon"><use href="/static/img/icons.svg#tools"></use></svg></span>
+    <span class="stat-value">{{ stats.servicios }}</span>
+    <span class="stat-label">Servicios</span>
+  </a>
+  <a class="stat-card" href="{{ url_for('admin.entity_list', entity_key='productos') }}">
+    <span class="stat-icon"><svg class="icon"><use href="/static/img/icons.svg#box"></use></svg></span>
+    <span class="stat-value">{{ stats.productos }}</span>
+    <span class="stat-label">Productos</span>
+  </a>
+  <a class="stat-card" href="{{ url_for('admin.entity_list', entity_key='certificados') }}">
+    <span class="stat-icon"><svg class="icon"><use href="/static/img/icons.svg#cert"></use></svg></span>
+    <span class="stat-value">{{ stats.certificados }}</span>
+    <span class="stat-label">Certificados</span>
+  </a>
+  <a class="stat-card" href="{{ url_for('admin.entity_list', entity_key='marcas') }}">
+    <span class="stat-icon"><svg class="icon"><use href="/static/img/icons.svg#star"></use></svg></span>
+    <span class="stat-value">{{ stats.marcas }}</span>
+    <span class="stat-label">Marcas</span>
+  </a>
+  <a class="stat-card" href="{{ url_for('admin.entity_list', entity_key='galeria') }}">
+    <span class="stat-icon"><svg class="icon"><use href="/static/img/icons.svg#image"></use></svg></span>
+    <span class="stat-value">{{ stats.galeria }}</span>
+    <span class="stat-label">Imagenes</span>
+  </a>
+  <a class="stat-card {{ 'stat-alert' if stats.no_leidos }}" href="{{ url_for('admin.messages') }}">
+    <span class="stat-icon"><svg class="icon"><use href="/static/img/icons.svg#mail"></use></svg></span>
+    <span class="stat-value">{{ stats.mensajes }}</span>
+    <span class="stat-label">Mensajes ({{ stats.no_leidos }} sin leer)</span>
+  </a>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Mensajes recientes</h2>
+    <a class="btn btn-outline btn-sm" href="{{ url_for('admin.messages') }}">Ver todos</a>
+  </div>
+  {% if recent %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr><th>De</th><th>Asunto</th><th>Fecha</th><th>Estado</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for m in recent %}
+        <tr>
+          <td><strong>{{ m.name }}</strong><br><small>{{ m.email or m.phone or '—' }}</small></td>
+          <td>{{ m.subject or (m.message | striptags | truncate(50)) }}</td>
+          <td>{{ m.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>{% if m.is_read %}<span class="pill">Leido</span>{% else %}<span class="pill pill-ok">Nuevo</span>{% endif %}</td>
+          <td class="td-actions">
+            <a class="btn btn-outline btn-xs" href="{{ url_for('admin.message_detail', item_id=m.id) }}">Abrir</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-state">Todavia no hay mensajes de contacto.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h2>Accesos rapidos</h2></div>
+  <div class="quick-grid">
+    <a class="quick-link" href="{{ url_for('admin.entity_create', entity_key='productos') }}">+ Nuevo producto</a>
+    <a class="quick-link" href="{{ url_for('admin.entity_create', entity_key='servicios') }}">+ Nuevo servicio</a>
+    <a class="quick-link" href="{{ url_for('admin.entity_create', entity_key='certificados') }}">+ Nuevo certificado</a>
+    <a class="quick-link" href="{{ url_for('admin.settings') }}">Editar textos del sitio</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Error del servidor — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
+{% block content %}
+<section class="section error-page">
+  <div class="container container-narrow" style="text-align:center">
+    <p class="error-code">500</p>
+    <h1>Ocurrio un problema inesperado</h1>
+    <p>Nuestro equipo ya fue notificado. Intentelo de nuevo en unos minutos.</p>
+    <a class="btn btn-primary" href="{{ url_for('public.index') }}">Volver al inicio</a>
+  </div>
+</section>
+{% endblock %}
