@@ -5,6 +5,12 @@
   var mainNav = document.getElementById("main-nav");
 
   if (navToggle && mainNav) {
+    var closeNav = function () {
+      mainNav.classList.remove("open");
+      navToggle.classList.remove("is-open");
+      navToggle.setAttribute("aria-expanded", "false");
+    };
+
     navToggle.addEventListener("click", function () {
       var open = mainNav.classList.toggle("open");
       navToggle.classList.toggle("is-open", open);
@@ -17,6 +23,13 @@
           e.preventDefault();
           link.parentElement.classList.toggle("open");
         }
+      });
+    });
+
+    mainNav.querySelectorAll("a").forEach(function (link) {
+      if (link.parentElement.classList.contains("has-sub")) return;
+      link.addEventListener("click", function () {
+        if (window.innerWidth <= 1020) closeNav();
       });
     });
   }

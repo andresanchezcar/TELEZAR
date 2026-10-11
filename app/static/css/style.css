@@ -265,9 +265,15 @@ a:hover { color: var(--primary); }
   margin-left: auto;
   cursor: pointer;
   color: var(--primary);
+  position: relative;
+  z-index: 120;
 }
 .nav-toggle .icon { width: 26px; height: 26px; }
 .nav-toggle .icon-close { display: none; }
+
+@media (max-width: 1020px) {
+  .nav-toggle.is-open { background: #fff; border-radius: 10px; box-shadow: var(--shadow); color: var(--primary); }
+}
 
 .main-nav { display: flex; align-items: center; gap: 14px; margin-left: auto; }
 

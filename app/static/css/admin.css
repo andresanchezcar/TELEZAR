@@ -98,7 +98,7 @@
   z-index: 40;
 }
 .admin-page-title { font-size: 22px; color: var(--primary); }
-.sidebar-toggle { display: none; background: none; border: 0; color: var(--primary); cursor: pointer; padding: 6px; }
+.sidebar-toggle { display: none; background: none; border: 0; color: var(--primary); cursor: pointer; padding: 6px; position: relative; z-index: 130; }
 .sidebar-toggle .icon { width: 24px; height: 24px; }
 
 .admin-user { margin-left: auto; display: flex; align-items: center; gap: 10px; }
@@ -250,6 +250,7 @@
   }
   .sidebar.open { transform: translateX(0); }
   .sidebar-toggle { display: block; }
+  .admin-body.sidebar-open .sidebar-toggle { background: #fff; border-radius: 10px; box-shadow: var(--shadow); }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .admin-content { padding: 18px; }
 }

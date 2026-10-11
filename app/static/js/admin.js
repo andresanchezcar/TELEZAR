@@ -8,10 +8,12 @@
   if (sidebar && toggle) {
     var openSidebar = function () {
       sidebar.classList.add("open");
+      document.body.classList.add("sidebar-open");
       if (overlay) overlay.classList.add("show");
     };
     var closeSidebar = function () {
       sidebar.classList.remove("open");
+      document.body.classList.remove("sidebar-open");
       if (overlay) overlay.classList.remove("show");
     };
 
