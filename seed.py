@@ -38,7 +38,7 @@ SETTINGS = [
     ("hero_badge", "Insignia del hero", "Hero (Inicio)", "text",
      "Especialistas en fibra optica"),
     ("hero_title", "Titulo principal", "Hero (Inicio)", "text",
-     "Reparacion, mantenimiento y certificacion de equipos de fibra optica"),
+     "Reparacion, Mantenimiento y Certificacion de Equipos de Fibra Optica"),
     ("hero_subtitle", "Subtitulo", "Hero (Inicio)", "textarea",
      "Fusionadoras, OTDR, cortadoras, identificadores de trafico, OPM y mas equipos de cualquier tipo y marca. Contamos con el equipo humano y tecnico que su compania necesita."),
     ("hero_image", "Imagen/ilustracion", "Hero (Inicio)", "image", ""),

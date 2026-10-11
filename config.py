@@ -10,7 +10,7 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "clave-secreta-por-defecto-cambiar")
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL",
-        "mysql+pymysql://root:@localhost:3306/telezarcomunicaciones?charset=utf8mb4",
+        "sqlite:///" + os.path.join(BASEDIR, "instance", "telezarcomunicaciones.db"),
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 300}

@@ -14,6 +14,18 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     csrf.init_app(app)
 
+    uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if uri.startswith("sqlite:///"):
+        db_dir = os.path.dirname(uri[len("sqlite:///"):])
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
+
+    from flask import send_from_directory
+
+    @app.route("/uploads/<path:filename>")
+    def uploaded_file(filename):
+        return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
     from app.blueprints.admin import admin_bp
     from app.blueprints.auth import auth_bp
     from app.blueprints.public import public_bp
