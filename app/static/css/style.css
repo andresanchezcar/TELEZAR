@@ -723,7 +723,26 @@ a:hover { color: var(--primary); }
 @media (max-width: 680px) { .cert-help { grid-template-columns: 1fr; } }
 
 /* ----------------------------- Paginas ----------------------------- */
-.page-cover { border-radius: var(--radius); margin-bottom: 30px; box-shadow: var(--shadow); }
+.page-body-media {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  gap: 34px;
+  align-items: start;
+}
+.page-media { margin: 0; }
+.page-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 460px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+@media (max-width: 780px) {
+  .page-body-media { grid-template-columns: 1fr; gap: 22px; }
+  .page-media img { max-height: 300px; }
+}
 .page-cta {
   display: flex;
   align-items: center;

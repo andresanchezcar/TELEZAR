@@ -15,11 +15,15 @@
 
 <section class="section">
   <div class="container container-narrow">
-    {% if page.image %}
-    <img class="page-cover" src="{{ page.image }}" alt="{{ page.title }}">
-    {% endif %}
-    <div class="rich-text">
-      {{ page.body | safe }}
+    <div class="page-body{% if page.image %} page-body-media{% endif %}">
+      {% if page.image %}
+      <figure class="page-media">
+        <img src="{{ page.image }}" alt="{{ page.title }}" loading="lazy">
+      </figure>
+      {% endif %}
+      <div class="rich-text">
+        {{ page.body | safe }}
+      </div>
     </div>
 
     <div class="page-cta">
