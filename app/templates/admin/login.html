@@ -12,8 +12,8 @@
 <body class="login-body">
   <div class="login-card">
     <img class="login-logo" src="{{ settings.get('site_logo') or url_for('static', filename='img/logo.png') }}" alt="Telezar">
-    <h1>Panel de administracion</h1>
-    <p class="login-sub">Ingrese sus credenciales para gestionar el contenido del sitio.</p>
+    <!-- <h1>Panel de administracion</h1>
+    <p class="login-sub">Ingrese sus credenciales para gestionar el contenido del sitio.</p> -->
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}

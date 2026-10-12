@@ -27,7 +27,7 @@
       <label for="f-{{ f.name }}">{{ f.label }}{% if f.required %} *{% endif %}</label>
       {% if val %}<div class="upload-preview"><img src="{{ val }}" alt=""><a class="upload-remove" href="{{ val }}" target="_blank" rel="noopener">Ver archivo</a></div>{% endif %}
       <input class="form-file" type="file" id="f-{{ f.name }}" name="{{ f.name }}" accept="image/*,.pdf" {{ required }}>
-      <small class="field-help">Formatos permitidos: PNG, JPG, WEBP, SVG y PDF. Max. 8 MB.</small>
+      <small class="field-help">Formatos permitidos: PNG, JPG, WEBP, GIF y PDF. Max. 8 MB.</small>
     </div>
 
     {% elif f.type == 'select' %}

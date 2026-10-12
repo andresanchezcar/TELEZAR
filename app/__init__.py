@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 from config import Config
 from app.extensions import csrf, db, login_manager
@@ -38,8 +38,50 @@ def create_app(config_class=Config):
 
     register_error_handlers(app)
     register_template_helpers(app)
+    register_security(app)
 
     return app
+
+
+def register_security(app):
+    """Cookies seguras y cabeceras de seguridad (sin romper el sitio)."""
+    forced_secure = os.environ.get("SESSION_COOKIE_SECURE")
+
+    @app.before_request
+    def _secure_cookies():
+        if forced_secure is not None:
+            app.config["SESSION_COOKIE_SECURE"] = forced_secure == "1"
+        else:
+            proto = request.headers.get("X-Forwarded-Proto") or request.environ.get(
+                "wsgi.url_scheme", ""
+            )
+            app.config["SESSION_COOKIE_SECURE"] = proto == "https"
+
+    @app.after_request
+    def _security_headers(resp):
+        resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        resp.headers.setdefault(
+            "Permissions-Policy", "geolocation=(), microphone=(), camera=()"
+        )
+        resp.headers.setdefault(
+            "Content-Security-Policy",
+            "default-src 'self'; "
+            "img-src 'self' data: https:; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "script-src 'self'; "
+            "object-src 'none'; "
+            "frame-ancestors 'self'; "
+            "base-uri 'self'; "
+            "form-action 'self'",
+        )
+        if request.is_secure or request.headers.get("X-Forwarded-Proto") == "https":
+            resp.headers.setdefault(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+            )
+        return resp
 
 
 def register_error_handlers(app):

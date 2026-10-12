@@ -45,7 +45,7 @@
         <td class="td-actions">
           <a class="btn btn-outline btn-xs" href="{{ url_for('admin.entity_edit', entity_key=entity.key, item_id=item.id) }}">Editar</a>
           <form class="inline-form" method="post" action="{{ url_for('admin.entity_delete', entity_key=entity.key, item_id=item.id) }}"
-                onsubmit="return confirm('¿Eliminar este {{ entity.singular }}?');">
+                data-confirm="¿Eliminar este {{ entity.singular }}?">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-danger btn-xs" type="submit">Eliminar</button>
           </form>

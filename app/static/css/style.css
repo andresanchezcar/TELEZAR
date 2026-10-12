@@ -801,6 +801,9 @@ a:hover { color: var(--primary); }
 .footer-bottom p { color: #7d8cb5; font-size: 13.5px; }
 .footer-admin { color: #7d8cb5; font-size: 13px; font-weight: 600; }
 .footer-admin:hover { color: var(--accent); }
+.footer-credit { color: #7d8cb5; font-size: 13px; }
+.footer-credit a { color: #9fb0d8; font-weight: 600; }
+.footer-credit a:hover { color: var(--accent); }
 
 @media (max-width: 960px) {
   .footer-grid { grid-template-columns: repeat(2, 1fr); }
