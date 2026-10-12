@@ -19,5 +19,8 @@ class Config:
     MAX_CONTENT_LENGTH = 8 * 1024 * 1024  # 8 MB por archivo
     ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "svg", "pdf"}
 
+    # Dominio publico (canonical, sitemap, Open Graph). Si no se define, usa telezarcomunicaciones.com
+    SITE_URL = os.environ.get("SITE_URL", "https://telezarcomunicaciones.com/").rstrip("/")
+
     # Paginacion
     PRODUCTS_PER_PAGE = 12

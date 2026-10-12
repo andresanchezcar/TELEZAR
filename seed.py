@@ -35,6 +35,12 @@ SETTINGS = [
     ("site_logo", "Logo", "Identidad", "image", ""),
     ("favicon", "Favicon", "Identidad", "image", ""),
 
+    ("site_url", "Dominio publico (canonical, sitemap, redes)", "SEO", "text",
+     "https://telezarcomunicaciones.com"),
+    ("seo_keywords", "Palabras clave (SEO)", "SEO", "text",
+     "comunicaciones, fibra optica, redes, telecomunicaciones, OTDR, fusionadoras, certificacion de equipos"),
+    ("og_image", "Imagen para compartir en redes (Open Graph)", "SEO", "image", ""),
+
     ("hero_badge", "Insignia del hero", "Hero (Inicio)", "text",
      "Especialistas en fibra optica"),
     ("hero_title", "Titulo principal", "Hero (Inicio)", "text",

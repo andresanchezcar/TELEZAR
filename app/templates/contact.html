@@ -1,52 +1,52 @@
 {% extends "base.html" %}
-{% block title %}Contacto — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
+{% block title %}{{ t('contacto_title') }} — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
 
 {% block content %}
 <section class="page-hero">
   <div class="container">
-    <nav class="breadcrumbs"><a href="{{ url_for('public.index') }}">Inicio</a> <span>/</span> Contacto</nav>
-    <h1>Contacto</h1>
-    <p>Estamos listos para atender sus solicitudes. «Trabajamos con actitud positiva, compromiso y dedicacion para servirle siempre».</p>
+    <nav class="breadcrumbs"><a href="{{ url_for('public.index') }}">{{ t('bread_inicio') }}</a> <span>/</span> {{ t('contacto_title') }}</nav>
+    <h1>{{ t('contacto_title') }}</h1>
+    <p>{{ t('contacto_intro') }}</p>
   </div>
 </section>
 
 <section class="section">
   <div class="container contact-grid">
     <div class="contact-form-card">
-      <h2>Escribenos</h2>
+      <h2>{{ t('contacto_escribenos') }}</h2>
       <form method="post" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-row">
           <div class="form-group">
-            <label for="name">Nombre *</label>
+            <label for="name">{{ t('form_nombre') }} *</label>
             <input class="form-control" type="text" id="name" name="name" value="{{ form.get('name', '') }}" required>
           </div>
           <div class="form-group">
-            <label for="phone">Telefono</label>
+            <label for="phone">{{ t('form_telefono') }}</label>
             <input class="form-control" type="tel" id="phone" name="phone" value="{{ form.get('phone', '') }}">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="email">Correo electronico</label>
+            <label for="email">{{ t('form_email') }}</label>
             <input class="form-control" type="email" id="email" name="email" value="{{ form.get('email', '') }}">
           </div>
           <div class="form-group">
-            <label for="subject">Asunto</label>
+            <label for="subject">{{ t('form_asunto') }}</label>
             <input class="form-control" type="text" id="subject" name="subject" value="{{ form.get('subject', '') }}">
           </div>
         </div>
         <div class="form-group">
-          <label for="message">Mensaje *</label>
+          <label for="message">{{ t('form_mensaje') }} *</label>
           <textarea class="form-control" id="message" name="message" rows="6" required>{{ form.get('message', '') }}</textarea>
         </div>
-        <button class="btn btn-primary btn-block" type="submit">Enviar mensaje</button>
+        <button class="btn btn-primary btn-block" type="submit">{{ t('contacto_enviar') }}</button>
       </form>
     </div>
 
     <aside class="contact-aside">
       <div class="contact-card">
-        <h3>Directo con nosotros</h3>
+        <h3>{{ t('contacto_directo') }}</h3>
         <ul class="footer-contact">
           {% if settings.get('phone') %}
           <li><svg class="icon"><use href="/static/img/icons.svg#phone"></use></svg>
@@ -70,16 +70,16 @@
           {% endif %}
         </ul>
         <a class="btn btn-whatsapp btn-block" href="{{ wa('Hola, escribo desde la pagina de contacto de su sitio web.') }}" target="_blank" rel="noopener">
-          <svg class="icon"><use href="/static/img/icons.svg#whatsapp"></use></svg> Chatear por WhatsApp
+          <svg class="icon"><use href="/static/img/icons.svg#whatsapp"></use></svg> {{ t('contacto_chat_wa') }}
         </a>
       </div>
 
       <div class="contact-card">
-        <h3>Otras opciones</h3>
+        <h3>{{ t('contacto_otras_opciones') }}</h3>
         <ul class="quick-links">
-          <li><a href="{{ url_for('public.certificados') }}">Busca tu certificado</a></li>
-          <li><a href="{{ url_for('public.soporte') }}">Centro de soporte tecnico</a></li>
-          <li><a href="{{ url_for('public.alquiler') }}">Alquiler de equipos</a></li>
+          <li><a href="{{ url_for('public.certificados') }}">{{ t('btn_busca_certificado') }}</a></li>
+          <li><a href="{{ url_for('public.soporte') }}">{{ t('nav_soporte') }}</a></li>
+          <li><a href="{{ url_for('public.alquiler') }}">{{ t('nav_alquiler') }}</a></li>
         </ul>
       </div>
     </aside>

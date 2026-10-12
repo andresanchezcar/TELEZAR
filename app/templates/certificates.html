@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Busca tu certificado — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
+{% block title %}{{ t('btn_busca_certificado') }} — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
 
 {% block content %}
 <section class="page-hero">
   <div class="container">
-    <nav class="breadcrumbs"><a href="{{ url_for('public.index') }}">Inicio</a> <span>/</span> Certificados</nav>
+    <nav class="breadcrumbs"><a href="{{ url_for('public.index') }}">{{ t('bread_inicio') }}</a> <span>/</span> {{ t('bread_certificados') }}</nav>
     <h1>{{ settings.get('cert_title', 'Genera tu certificado') }}</h1>
     <p>{{ settings.get('cert_text', 'Digite el numero de serie del equipo para descargar su certificado.') }}</p>
   </div>
@@ -14,8 +14,8 @@
   <div class="container container-narrow">
     <form class="cert-search" method="get" action="{{ url_for('public.certificados') }}">
       <svg class="icon"><use href="/static/img/icons.svg#search"></use></svg>
-      <input type="search" name="q" value="{{ q }}" placeholder="Ej. TZC0738, 27AM1701, numero de serie..." aria-label="Numero de serie" required>
-      <button class="btn btn-primary" type="submit">Buscar</button>
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ t('cert_placeholder') }}" aria-label="Numero de serie" required>
+      <button class="btn btn-primary" type="submit">{{ t('cert_buscar') }}</button>
     </form>
 
     {% if q %}
@@ -27,28 +27,28 @@
           <div class="cert-info">
             <h3>{{ c.serial }}</h3>
             <ul class="spec-list">
-              {% if c.client %}<li><strong>Cliente:</strong> {{ c.client }}</li>{% endif %}
-              {% if c.equipment %}<li><strong>Equipo:</strong> {{ c.equipment }}</li>{% endif %}
-              {% if c.issued_date %}<li><strong>Emitido:</strong> {{ c.issued_date | date_es }}</li>{% endif %}
+              {% if c.client %}<li><strong>{{ t('cert_cliente') }}</strong> {{ c.client }}</li>{% endif %}
+              {% if c.equipment %}<li><strong>{{ t('cert_equipo') }}</strong> {{ c.equipment }}</li>{% endif %}
+              {% if c.issued_date %}<li><strong>{{ t('cert_emitido') }}</strong> {{ c.issued_date | date_es }}</li>{% endif %}
             </ul>
             {% if c.notes %}<p>{{ c.notes }}</p>{% endif %}
           </div>
           {% if c.file_url %}
-          <a class="btn btn-outline btn-sm" href="{{ c.file_url }}" target="_blank" rel="noopener">Descargar PDF</a>
+          <a class="btn btn-outline btn-sm" href="{{ c.file_url }}" target="_blank" rel="noopener">{{ t('cert_descargar') }}</a>
           {% endif %}
         </article>
         {% endfor %}
       </div>
       {% else %}
-      <p class="empty-state">No encontramos certificados para «{{ q }}». Verifique el numero de serie o contactenos.</p>
+      <p class="empty-state">{{ t('cert_empty', q=q) }}</p>
       {% endif %}
     {% else %}
     <div class="cert-help">
       <img src="{{ url_for('static', filename='img/cert.svg') }}" alt="Certificado">
       <div>
-        <h3>¿Donde encuentro el numero de serie?</h3>
-        <p>El numero de serie se encuentra en la etiqueta de su equipo (fusionadora, OTDR, cortadora, etc.), normalmente en la parte posterior o en el maletin de transporte.</p>
-        <a class="btn btn-outline btn-sm" href="{{ url_for('public.contacto') }}">Necesito ayuda</a>
+        <h3>{{ t('cert_help_title') }}</h3>
+        <p>{{ t('cert_help_text') }}</p>
+        <a class="btn btn-outline btn-sm" href="{{ url_for('public.contacto') }}">{{ t('cert_necesito_ayuda') }}</a>
       </div>
     </div>
     {% endif %}

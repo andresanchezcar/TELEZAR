@@ -2,6 +2,7 @@ import urllib.parse
 
 from flask import (
     Blueprint,
+    Response,
     abort,
     flash,
     redirect,
@@ -212,3 +213,42 @@ def page_fallback(slug):
     if page is None:
         abort(404)
     return render_template("page.html", page=page)
+
+
+@public_bp.route("/robots.txt")
+def robots():
+    base = base_context()["base_url"]
+    txt = (
+        "User-agent: *\n"
+        "Allow: /\n\n"
+        f"Sitemap: {base}/sitemap.xml\n"
+    )
+    return Response(txt, mimetype="text/plain; charset=utf-8")
+
+
+@public_bp.route("/sitemap.xml")
+def sitemap():
+    base = base_context()["base_url"]
+    locs = {f"{base}{p}" for p in [
+        "/",
+        "/nosotros",
+        "/servicios",
+        "/ventas",
+        "/alquiler",
+        "/capacitaciones",
+        "/soporte",
+        "/certificados",
+        "/contacto",
+    ]}
+    for page in Page.query.filter_by(published=True).all():
+        locs.add(f"{base}/{page.slug}")
+    for product in Product.query.filter_by(published=True).all():
+        locs.add(f"{base}/producto/{product.slug}")
+    entries = "\n".join(f"  <url><loc>{loc}</loc></url>" for loc in sorted(locs))
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{entries}\n"
+        "</urlset>\n"
+    )
+    return Response(xml, mimetype="application/xml; charset=utf-8")

@@ -12,14 +12,14 @@
       <p class="hero-lead">{{ settings.get('hero_subtitle', '') }}</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="{{ whatsapp_url }}" target="_blank" rel="noopener">
-          <svg class="icon"><use href="/static/img/icons.svg#whatsapp"></use></svg> Contactanos
+          <svg class="icon"><use href="/static/img/icons.svg#whatsapp"></use></svg> {{ t('hero_contactanos') }}
         </a>
-        <a class="btn btn-outline" href="{{ url_for('public.services') }}">Ver servicios</a>
+        <a class="btn btn-outline" href="{{ url_for('public.services') }}">{{ t('hero_ver_servicios') }}</a>
       </div>
       <ul class="hero-highlights">
-        <li><svg class="icon"><use href="/static/img/icons.svg#check"></use></svg> Atencion 24/7</li>
-        <li><svg class="icon"><use href="/static/img/icons.svg#check"></use></svg> Equipos calibrados</li>
-        <li><svg class="icon"><use href="/static/img/icons.svg#check"></use></svg> Personal certificado</li>
+        <li><svg class="icon"><use href="/static/img/icons.svg#check"></use></svg> {{ t('hero_highlight_1') }}</li>
+        <li><svg class="icon"><use href="/static/img/icons.svg#check"></use></svg> {{ t('hero_highlight_2') }}</li>
+        <li><svg class="icon"><use href="/static/img/icons.svg#check"></use></svg> {{ t('hero_highlight_3') }}</li>
       </ul>
     </div>
     <div class="hero-visual">
@@ -31,9 +31,9 @@
 <section class="section">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Lo que hacemos</span>
-      <h2>Nuestros servicios</h2>
-      <p>Soluciones integrales en redes, fibra optica y telecomunicaciones para su empresa.</p>
+      <span class="eyebrow">{{ t('sec_servicios_eyebrow') }}</span>
+      <h2>{{ t('sec_servicios_title') }}</h2>
+      <p>{{ t('sec_servicios_text') }}</p>
     </div>
     <div class="grid grid-3">
       {% for s in services %}
@@ -43,7 +43,7 @@
         </div>
         <h3>{{ s.title }}</h3>
         <p>{{ s.excerpt or (s.body | striptags | truncate(140)) }}</p>
-        <a class="link-more" href="{{ url_for('public.services') }}">Ver mas
+        <a class="link-more" href="{{ url_for('public.services') }}">{{ t('link_ver_mas') }}
           <svg class="icon"><use href="/static/img/icons.svg#arrow"></use></svg>
         </a>
       </article>
@@ -62,10 +62,10 @@
       </div>
     </div>
     <div class="split-copy">
-      <span class="eyebrow">Sobre nosotros</span>
+      <span class="eyebrow">{{ t('sec_nosotros_eyebrow') }}</span>
       <h2>{{ settings.get('about_title', 'TELEZAR COMUNICACIONES') }}</h2>
       <p>{{ settings.get('about_text', '') }}</p>
-      <a class="btn btn-primary" href="{{ url_for('public.nosotros') }}">Conocenos</a>
+      <a class="btn btn-primary" href="{{ url_for('public.nosotros') }}">{{ t('btn_conocenos') }}</a>
     </div>
   </div>
 </section>
@@ -74,14 +74,14 @@
 <section class="section">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Nuestros trabajos</span>
-      <h2>Galeria de proyectos</h2>
-      <p>El equipo humano y tecnico que garantiza la calidad de nuestro trabajo.</p>
+      <span class="eyebrow">{{ t('sec_galeria_eyebrow') }}</span>
+      <h2>{{ t('sec_galeria_title') }}</h2>
+      <p>{{ t('sec_galeria_text') }}</p>
     </div>
     <div class="gallery-grid">
       {% for img in gallery %}
       <figure class="gallery-item">
-        <img src="{{ img.image }}" alt="{{ img.title or 'Proyecto Telezar' }}" loading="lazy">
+        <img src="{{ img.image }}" alt="{{ img.title or t('sec_galeria_title') }}" loading="lazy">
         {% if img.title %}<figcaption>{{ img.title }}</figcaption>{% endif %}
       </figure>
       {% endfor %}
@@ -94,8 +94,8 @@
 <section class="section section-alt">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Alianzas</span>
-      <h2>Trabajamos con las mejores marcas del sector</h2>
+      <span class="eyebrow">{{ t('sec_marcas_eyebrow') }}</span>
+      <h2>{{ t('sec_marcas_title') }}</h2>
     </div>
     <div class="brands-row">
       {% for b in brands %}
@@ -114,7 +114,7 @@
       <h2>{{ settings.get('cert_title', 'Descarga tu certificado') }}</h2>
       <p>{{ settings.get('cert_text', 'Busca tu certificado de calibracion o mantenimiento con el numero de serie de tu equipo.') }}</p>
     </div>
-    <a class="btn btn-light" href="{{ url_for('public.certificados') }}">Busca tu certificado</a>
+    <a class="btn btn-light" href="{{ url_for('public.certificados') }}">{{ t('btn_busca_certificado') }}</a>
   </div>
 </section>
 
@@ -123,17 +123,17 @@
     <div class="grid grid-3 value-grid">
       <article class="value-card">
         <div class="value-icon"><svg class="icon"><use href="/static/img/icons.svg#target"></use></svg></div>
-        <h3>Mision</h3>
+        <h3>{{ t('value_mission') }}</h3>
         <p>{{ settings.get('mission', '') }}</p>
       </article>
       <article class="value-card">
         <div class="value-icon"><svg class="icon"><use href="/static/img/icons.svg#eye"></use></svg></div>
-        <h3>Vision</h3>
+        <h3>{{ t('value_vision') }}</h3>
         <p>{{ settings.get('vision', '') }}</p>
       </article>
       <article class="value-card">
         <div class="value-icon"><svg class="icon"><use href="/static/img/icons.svg#shield"></use></svg></div>
-        <h3>Garantia</h3>
+        <h3>{{ t('value_guarantee') }}</h3>
         <p>{{ settings.get('guarantee', '') }}</p>
       </article>
     </div>

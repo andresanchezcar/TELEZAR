@@ -27,7 +27,12 @@ from app.models import (
     User,
     unique_slug,
 )
-from app.utils import delete_upload, get_settings_by_section, save_upload
+from app.utils import (
+    DEFAULT_LABELS,
+    delete_upload,
+    get_settings_by_section,
+    save_upload,
+)
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -547,6 +552,41 @@ def settings():
 
     return render_template(
         "admin/settings.html", sections=get_settings_by_section()
+    )
+
+
+# --------------------------------------------------------------------------
+# Textos de la interfaz (etiquetas editables)
+# --------------------------------------------------------------------------
+@admin_bp.route("/textos", methods=["GET", "POST"])
+def textos():
+    if request.method == "POST":
+        for key, default in DEFAULT_LABELS.items():
+            value = request.form.get(f"label_{key}")
+            if value is None:
+                continue
+            row = Setting.query.filter_by(key=f"label_{key}").first()
+            if row:
+                row.value = value
+            else:
+                Setting.set(
+                    f"label_{key}",
+                    value,
+                    label=default,
+                    section="Textos de interfaz",
+                    field_type="text",
+                )
+        db.session.commit()
+        flash("Textos guardados correctamente.", "success")
+        return redirect(url_for("admin.textos"))
+
+    labels_overrides = {
+        s.key[len("label_"):]: s.value
+        for s in Setting.query.filter_by(section="Textos de interfaz").all()
+        if s.key.startswith("label_")
+    }
+    return render_template(
+        "admin/textos.html", labels=DEFAULT_LABELS, labels_overrides=labels_overrides
     )
 
 

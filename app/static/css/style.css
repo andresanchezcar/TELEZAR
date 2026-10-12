@@ -84,6 +84,9 @@ a:hover { color: var(--primary); }
 .btn-outline { background: transparent; color: var(--primary); border-color: var(--border); }
 .btn-outline:hover { border-color: var(--accent); color: var(--accent-dark); background: var(--accent-soft); }
 
+.hero .btn-outline { color: #fff; border-color: rgba(255, 255, 255, 0.55); }
+.hero .btn-outline:hover { color: var(--primary); background: #fff; border-color: #fff; }
+
 .btn-whatsapp { background: var(--wa); color: #fff; box-shadow: 0 8px 20px rgba(37, 211, 102, 0.30); }
 .btn-whatsapp:hover { background: #1ebe58; color: #fff; }
 
@@ -540,7 +543,7 @@ a:hover { color: var(--primary); }
 /* ----------------------------- CTA banner ----------------------------- */
 .cta-banner { background-color: var(--primary); background-image: var(--cta-bg, linear-gradient(135deg, #0c1c46, #123a75)); background-size: cover; background-position: center; position: relative; }
 .cta-banner::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8, 16, 40, 0.82), rgba(8, 16, 40, 0.30)); }
-.cta-inner { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 30px; flex-wrap: wrap; padding: 40px 0 8px; }
+.cta-inner { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 30px; flex-wrap: wrap; padding-top: 40px; padding-bottom: 8px; }
 .cta-copy { color: #fff; max-width: 640px; }
 .cta-copy h2 { font-size: 30px; margin-bottom: 10px; }
 .cta-copy p { color: #c7d2ea; font-size: 16.5px; }
@@ -660,10 +663,10 @@ a:hover { color: var(--primary); }
 .contact-card + .contact-card { margin-top: 20px; }
 .contact-card h3 { font-size: 17px; }
 .footer-contact { list-style: none; display: grid; gap: 10px; }
-.footer-contact li { display: flex; align-items: flex-start; gap: 10px; font-size: 14.5px; color: var(--primary); }
-.footer-contact li .icon { width: 17px; height: 17px; color: var(--accent-dark); margin-top: 2px; }
-.footer-contact a { color: var(--primary); font-weight: 600; word-break: break-word; }
-.footer-contact a:hover { color: var(--accent-dark); }
+.footer-contact li { display: flex; align-items: flex-start; gap: 10px; font-size: 14.5px; color: #a9b6d3; }
+.footer-contact li .icon { width: 17px; height: 17px; color: var(--accent); margin-top: 2px; }
+.footer-contact a { color: #a9b6d3; font-weight: 600; word-break: break-word; }
+.footer-contact a:hover { color: var(--accent); }
 .contact-card .btn { margin-top: 18px; }
 .quick-links { list-style: none; display: grid; gap: 8px; }
 .quick-links a { font-weight: 600; }
