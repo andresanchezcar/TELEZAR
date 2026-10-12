@@ -80,4 +80,51 @@
       if (e.target === lightbox) closeLightbox();
     });
   }
+
+  var storageGet = function (store, key) {
+    try {
+      return window[store].getItem(key);
+    } catch (e) {
+      return null;
+    }
+  };
+
+  var storageSet = function (store, key) {
+    try {
+      window[store].setItem(key, "1");
+    } catch (e) {
+      /* almacenamiento no disponible */
+    }
+  };
+
+  document.querySelectorAll("[data-modal]").forEach(function (modal) {
+    var frequency = modal.getAttribute("data-frequency") || "session";
+    var key = "telezar_" + (modal.getAttribute("data-key") || "modal");
+    var delay = parseInt(modal.getAttribute("data-delay") || "0", 10) * 1000;
+
+    if (frequency === "once" && storageGet("localStorage", key)) return;
+    if (frequency === "session" && storageGet("sessionStorage", key)) return;
+
+    var open = function () {
+      modal.classList.add("show");
+      if (frequency === "once") storageSet("localStorage", key);
+      else if (frequency === "session") storageSet("sessionStorage", key);
+    };
+
+    var close = function () {
+      modal.classList.remove("show");
+    };
+
+    setTimeout(open, isNaN(delay) || delay < 0 ? 0 : delay);
+
+    modal.querySelectorAll("[data-modal-close]").forEach(function (btn) {
+      btn.addEventListener("click", close);
+    });
+    modal.addEventListener("click", function (e) {
+      if (e.target === modal) close();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") close();
+    });
+  });
 })();

@@ -191,6 +191,25 @@ class GalleryImage(db.Model):
     published = db.Column(db.Boolean, default=True)
 
 
+class HomeModal(db.Model):
+    __tablename__ = "home_modals"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(160), nullable=False)
+    body = db.Column(db.Text, default="")
+    image = db.Column(db.String(255), default="")
+    button_text = db.Column(db.String(80), default="")
+    button_action = db.Column(db.String(20), default="none")  # none|page|url|whatsapp
+    button_page = db.Column(db.String(255), default="")
+    button_url = db.Column(db.String(255), default="")
+    button_message = db.Column(db.Text, default="")
+    delay = db.Column(db.Integer, default=0)
+    frequency = db.Column(db.String(20), default="session")
+    order = db.Column(db.Integer, default=0)
+    published = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 def unique_slug(model, base, exclude_id=None):
     """Genera un slug unico dentro del modelo indicado."""
     slugify = (

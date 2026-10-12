@@ -9,6 +9,7 @@
   {% for f in fields %}
     {% set val = obj | attr(f.name) %}
     {% set required = ' required' if f.required else '' %}
+    <div class="form-block"{% if f.show_if %} data-show-if='{{ f.show_if | tojson }}'{% endif %}>
 
     {% if f.type == 'bool' %}
     <div class="form-check">
@@ -20,6 +21,7 @@
     <div class="form-group">
       <label for="f-{{ f.name }}">{{ f.label }}{% if f.required %} *{% endif %}</label>
       <textarea class="form-control" id="f-{{ f.name }}" name="{{ f.name }}" rows="{{ f.rows }}"{{ required }}>{{ val or '' }}</textarea>
+      {% if f.help %}<small class="field-help">{{ f.help }}</small>{% endif %}
     </div>
 
     {% elif f.type == 'image' %}
@@ -34,11 +36,12 @@
     <div class="form-group">
       <label for="f-{{ f.name }}">{{ f.label }}{% if f.required %} *{% endif %}</label>
       <select class="form-control" id="f-{{ f.name }}" name="{{ f.name }}" {{ required }}>
-        {% if not f.required %}<option value="">— Seleccionar —</option>{% endif %}
+        {% if not f.required and not f.default %}<option value="">— Seleccionar —</option>{% endif %}
         {% for value, label in f.choices %}
         <option value="{{ value }}" {% if val is not none and val | string == value | string %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
+      {% if f.help %}<small class="field-help">{{ f.help }}</small>{% endif %}
     </div>
 
     {% elif f.type == 'date' %}
@@ -67,6 +70,8 @@
       {% if f.help %}<small class="field-help">{{ f.help }}</small>{% endif %}
     </div>
     {% endif %}
+
+    </div>
   {% endfor %}
 
   <div class="form-actions">

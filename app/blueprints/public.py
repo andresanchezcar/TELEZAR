@@ -16,6 +16,7 @@ from app.models import (
     Certificate,
     ContactMessage,
     GalleryImage,
+    HomeModal,
     Page,
     Product,
     Service,
@@ -52,11 +53,15 @@ def index():
         .limit(6)
         .all()
     )
+    home_modals = (
+        HomeModal.query.filter_by(published=True).order_by(HomeModal.order).all()
+    )
     return render_template(
         "index.html",
         settings=settings,
         services=featured_services,
         gallery=gallery,
+        home_modals=home_modals,
     )
 
 

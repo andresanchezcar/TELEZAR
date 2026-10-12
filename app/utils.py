@@ -65,9 +65,54 @@ def get_settings():
     return {s.key: s.value for s in Setting.query.all()}
 
 
+SETTINGS_SECTION_ORDER = [
+    "Identidad",
+    "SEO",
+    "Hero (Inicio)",
+    "Sobre nosotros",
+    "Mision / Vision / Garantia",
+    "Contacto",
+    "Redes sociales",
+    "Catalogo",
+    "Certificados",
+    "Pie de pagina",
+]
+
+SETTINGS_KEY_ORDER = [
+    "site_name", "site_tagline", "site_logo", "favicon",
+    "site_url", "seo_keywords", "og_image",
+    "hero_badge", "hero_title", "hero_subtitle", "hero_image",
+    "about_title", "about_text", "about_image", "about_badge_number", "about_badge_text",
+    "mission", "vision", "guarantee",
+    "phone", "phone2", "whatsapp", "address", "schedule",
+    "email_general", "email_ventas", "email_soporte", "email_infosoporte",
+    "facebook", "twitter", "linkedin", "instagram",
+    "catalog_text_venta", "catalog_text_alquiler",
+    "cert_title", "cert_text",
+    "footer_text", "copyright",
+]
+
+
+def _order_rank(values, item):
+    try:
+        return values.index(item)
+    except ValueError:
+        return len(values)
+
+
 def get_settings_by_section():
+    """Agrupa los ajustes por seccion en un orden logico (no alfabetico)."""
+    rows = Setting.query.all()
+    rows.sort(
+        key=lambda s: (
+            _order_rank(SETTINGS_SECTION_ORDER, s.section),
+            s.section,
+            _order_rank(SETTINGS_KEY_ORDER, s.key),
+            s.key,
+        )
+    )
     sections = {}
-    for s in Setting.query.order_by(Setting.section, Setting.key).all():
+    for s in rows:
         sections.setdefault(s.section, []).append(s)
     return sections
 

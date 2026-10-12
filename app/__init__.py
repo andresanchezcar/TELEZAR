@@ -36,11 +36,44 @@ def create_app(config_class=Config):
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
+    init_database(app)
+
     register_error_handlers(app)
     register_template_helpers(app)
     register_security(app)
 
     return app
+
+
+def init_database(app):
+    """Crea las tablas faltantes y agrega columnas nuevas (migracion aditiva segura)."""
+    from sqlalchemy import inspect, text
+
+    with app.app_context():
+        db.create_all()
+
+        inspector = inspect(db.engine)
+        existing_tables = set(inspector.get_table_names())
+        for table in db.metadata.sorted_tables:
+            if table.name not in existing_tables:
+                continue
+            existing_cols = {c["name"] for c in inspector.get_columns(table.name)}
+            for column in table.columns:
+                if column.name in existing_cols or column.primary_key:
+                    continue
+                col_type = column.type.compile(dialect=db.engine.dialect)
+                ddl = f'ALTER TABLE "{table.name}" ADD COLUMN "{column.name}" {col_type}'
+                default = getattr(column, "default", None)
+                if default is not None and getattr(default, "is_scalar", False):
+                    arg = default.arg
+                    if isinstance(arg, bool):
+                        ddl += f" DEFAULT {1 if arg else 0}"
+                    elif isinstance(arg, (int, float)):
+                        ddl += f" DEFAULT {arg}"
+                    elif isinstance(arg, str):
+                        ddl += " DEFAULT '" + arg.replace("'", "''") + "'"
+                db.session.execute(text(ddl))
+        db.session.commit()
 
 
 def register_security(app):

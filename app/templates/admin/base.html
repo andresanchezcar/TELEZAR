@@ -49,6 +49,9 @@
         <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'galeria' }}" href="{{ url_for('admin.entity_list', entity_key='galeria') }}">
           <svg class="icon"><use href="/static/img/icons.svg#image"></use></svg> Galeria
         </a>
+        <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'modales' }}" href="{{ url_for('admin.entity_list', entity_key='modales') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#external"></use></svg> Modales
+        </a>
 
         <p class="sidebar-label">Sistema</p>
         <a class="side-link {{ 'active' if request.endpoint == 'admin.settings' }}" href="{{ url_for('admin.settings') }}">

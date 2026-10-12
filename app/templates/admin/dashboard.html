@@ -34,6 +34,11 @@
     <span class="stat-value">{{ stats.galeria }}</span>
     <span class="stat-label">Imagenes</span>
   </a>
+  <a class="stat-card" href="{{ url_for('admin.entity_list', entity_key='modales') }}">
+    <span class="stat-icon"><svg class="icon"><use href="/static/img/icons.svg#external"></use></svg></span>
+    <span class="stat-value">{{ stats.modales }}</span>
+    <span class="stat-label">Modales del inicio</span>
+  </a>
   <a class="stat-card {{ 'stat-alert' if stats.no_leidos }}" href="{{ url_for('admin.messages') }}">
     <span class="stat-icon"><svg class="icon"><use href="/static/img/icons.svg#mail"></use></svg></span>
     <span class="stat-value">{{ stats.mensajes }}</span>
@@ -78,6 +83,7 @@
     <a class="quick-link" href="{{ url_for('admin.entity_create', entity_key='productos') }}">+ Nuevo producto</a>
     <a class="quick-link" href="{{ url_for('admin.entity_create', entity_key='servicios') }}">+ Nuevo servicio</a>
     <a class="quick-link" href="{{ url_for('admin.entity_create', entity_key='certificados') }}">+ Nuevo certificado</a>
+    <a class="quick-link" href="{{ url_for('admin.entity_create', entity_key='modales') }}">+ Nuevo modal</a>
     <a class="quick-link" href="{{ url_for('admin.settings') }}">Editar textos del sitio</a>
   </div>
 </section>

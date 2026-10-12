@@ -45,4 +45,31 @@
       }
     });
   });
+
+  var conditionalFields = document.querySelectorAll("[data-show-if]");
+  if (conditionalFields.length) {
+    var form = conditionalFields[0].closest("form") || document;
+
+    var applyConditions = function () {
+      conditionalFields.forEach(function (block) {
+        var rules;
+        try {
+          rules = JSON.parse(block.getAttribute("data-show-if"));
+        } catch (e) {
+          return;
+        }
+        var visible = Object.keys(rules).every(function (name) {
+          var control = form.querySelector('[name="' + name + '"]');
+          if (!control) return true;
+          var allowed = rules[name];
+          if (!Array.isArray(allowed)) allowed = [allowed];
+          return allowed.indexOf(control.value) !== -1;
+        });
+        block.classList.toggle("is-hidden", !visible);
+      });
+    };
+
+    form.addEventListener("change", applyConditions);
+    applyConditions();
+  }
 })();

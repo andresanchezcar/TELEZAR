@@ -12,6 +12,10 @@
     {{ item.price_display }}
   {% elif col.type == 'date' %}
     {{ val | date_es }}
+  {% elif col.choices %}
+    {% set ns = namespace(text=val or '—') %}
+    {% for cv, cl in col.choices %}{% if cv == val %}{% set ns.text = cl %}{% endif %}{% endfor %}
+    {{ ns.text }}
   {% else %}
     {{ val or '—' }}
   {% endif %}

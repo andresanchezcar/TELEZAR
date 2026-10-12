@@ -889,6 +889,60 @@ a:hover { color: var(--primary); }
 }
 .lightbox-close:hover { background: var(--danger); }
 
+/* ----------------------------- Modales del inicio ----------------------------- */
+.modal-stack { display: contents; }
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(8, 16, 40, 0.62);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.modal.show { opacity: 1; visibility: visible; }
+.modal-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(14px) scale(0.98);
+  transition: transform 0.25s ease;
+}
+.modal.show .modal-dialog { transform: translateY(0) scale(1); }
+.modal-image { display: block; width: 100%; max-height: 46vh; object-fit: cover; }
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(12, 28, 70, 0.55);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.modal-close:hover { background: var(--danger); }
+.modal-close .icon { width: 20px; height: 20px; }
+.modal-body { padding: 26px 28px 30px; }
+.modal-body h3 { font-size: 22px; margin-bottom: 10px; color: var(--primary); }
+.modal-text { color: var(--muted); font-size: 15.5px; line-height: 1.6; }
+.modal-text p { margin-bottom: 12px; }
+.modal-text p:last-child { margin-bottom: 0; }
+.modal-action { margin-top: 18px; }
+
 /* ----------------------------- Responsive base ----------------------------- */
 @media (max-width: 900px) {
   .section { padding: 60px 0; }

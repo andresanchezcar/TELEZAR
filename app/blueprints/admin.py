@@ -20,6 +20,7 @@ from app.models import (
     Certificate,
     ContactMessage,
     GalleryImage,
+    HomeModal,
     Page,
     Product,
     Service,
@@ -50,6 +51,8 @@ class Field:
     choices_source: str = ""
     help: str = ""
     rows: int = 6
+    default: str = ""
+    show_if: Optional[dict] = None
 
 
 @dataclass
@@ -244,6 +247,89 @@ ENTITIES = {
         order_by="order",
         image_fields=["image"],
     ),
+    "modales": Entity(
+        key="modales",
+        label="Modales del inicio",
+        singular="modal",
+        model=HomeModal,
+        fields=[
+            Field("title", "Titulo", required=True),
+            Field("body", "Contenido", type="textarea", rows=6, help="Texto que se muestra en el modal."),
+            Field("image", "Imagen", type="image", help="Opcional. Se muestra arriba del contenido."),
+            Field(
+                "button_action",
+                "Acción",
+                type="select",
+                default="none",
+                choices=[
+                    ("none", "Sin botón"),
+                    ("page", "Ir a una página del sitio"),
+                    ("url", "Abrir un enlace externo"),
+                    ("whatsapp", "Escribir por WhatsApp"),
+                ],
+            ),
+            Field(
+                "button_text",
+                "Texto del botón",
+                help="Opcional. Ej: Ver más, Escríbenos.",
+                show_if={"button_action": ["page", "url", "whatsapp"]},
+            ),
+            Field(
+                "button_page",
+                "Página de destino",
+                type="select",
+                choices_source="pages",
+                help="Página del sitio a la que llevará el botón.",
+                show_if={"button_action": ["page"]},
+            ),
+            Field(
+                "button_url",
+                "Enlace externo",
+                help="Ej: https://...",
+                show_if={"button_action": ["url"]},
+            ),
+            Field(
+                "button_message",
+                "Mensaje de WhatsApp",
+                type="textarea",
+                rows=3,
+                help="Opcional. Si se deja vacío se usa el contenido del modal.",
+                show_if={"button_action": ["whatsapp"]},
+            ),
+            Field("delay", "Retardo (segundos)", type="number", help="Tiempo antes de mostrarse."),
+            Field(
+                "frequency",
+                "Frecuencia",
+                type="select",
+                default="session",
+                choices=[
+                    ("session", "Una vez por sesión"),
+                    ("always", "Siempre"),
+                    ("once", "Una vez (recordar siempre)"),
+                ],
+            ),
+            Field("order", "Orden", type="number"),
+            Field("published", "Activo", type="bool"),
+        ],
+        columns=[
+            {"name": "title", "label": "Titulo"},
+            {
+                "name": "button_action",
+                "label": "Acción",
+                "choices": [
+                    ("none", "Sin botón"),
+                    ("page", "Página del sitio"),
+                    ("url", "Enlace externo"),
+                    ("whatsapp", "WhatsApp"),
+                ],
+            },
+            {"name": "frequency", "label": "Frecuencia"},
+            {"name": "order", "label": "Orden", "type": "number"},
+            {"name": "published", "label": "Activo", "type": "bool"},
+        ],
+        order_by="order",
+        image_fields=["image"],
+    ),
 }
 
 
@@ -263,6 +349,8 @@ def apply_defaults(obj, entity):
                 setattr(obj, f.name, f.name == "published")
             elif f.type == "number":
                 setattr(obj, f.name, 0)
+            elif f.type == "select" and f.default:
+                setattr(obj, f.name, f.default)
 
 
 def resolve_choices(entity):
@@ -273,6 +361,24 @@ def resolve_choices(entity):
                 (c.id, c.name)
                 for c in Category.query.order_by(Category.order, Category.name).all()
             ]
+        elif f.choices_source == "pages" and not f.choices:
+            fixed = [
+                ("/", "Inicio"),
+                ("/nosotros", "Nosotros"),
+                ("/servicios", "Servicios"),
+                ("/ventas", "Ventas"),
+                ("/alquiler", "Alquiler"),
+                ("/capacitaciones", "Capacitaciones"),
+                ("/soporte", "Soporte"),
+                ("/certificados", "Certificados"),
+                ("/contacto", "Contacto"),
+            ]
+            extra = [
+                (f"/{p.slug}", p.title)
+                for p in Page.query.filter_by(published=True).order_by(Page.order).all()
+                if p.slug not in ("nosotros", "capacitaciones", "soporte")
+            ]
+            f.choices = fixed + extra
     return entity.fields
 
 
@@ -353,6 +459,7 @@ def dashboard():
         "marcas": Brand.query.count(),
         "certificados": Certificate.query.count(),
         "galeria": GalleryImage.query.count(),
+        "modales": HomeModal.query.count(),
         "mensajes": ContactMessage.query.count(),
         "no_leidos": ContactMessage.query.filter_by(is_read=False).count(),
     }
@@ -536,16 +643,6 @@ def settings():
             else:
                 row.value = request.form.get(f"value_{row.key}", row.value)
 
-        # Alta rapida de un ajuste nuevo
-        new_key = (request.form.get("new_key") or "").strip()
-        if new_key:
-            Setting.set(
-                new_key,
-                request.form.get("new_value", ""),
-                label=request.form.get("new_label", new_key),
-                section=request.form.get("new_section", "General"),
-                field_type=request.form.get("new_type", "text"),
-            )
         db.session.commit()
         flash("Ajustes guardados correctamente.", "success")
         return redirect(url_for("admin.settings"))

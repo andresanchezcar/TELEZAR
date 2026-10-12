@@ -139,4 +139,39 @@
     </div>
   </div>
 </section>
+
+{% if home_modals %}
+<div class="modal-stack">
+  {% for m in home_modals %}
+  <div class="modal" data-modal data-delay="{{ m.delay or 0 }}" data-frequency="{{ m.frequency or 'session' }}" data-key="modal-{{ m.id }}">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-label="{{ m.title }}">
+      <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
+        <svg class="icon"><use href="/static/img/icons.svg#close"></use></svg>
+      </button>
+      {% if m.image %}<img class="modal-image" src="{{ m.image }}" alt="{{ m.title }}">{% endif %}
+      <div class="modal-body">
+        <h3>{{ m.title }}</h3>
+        {% if m.body %}<div class="modal-text">{{ m.body | safe }}</div>{% endif %}
+        {% if m.button_text %}
+          {% set action = m.button_action or 'none' %}
+          {% set href = '' %}
+          {% if action == 'whatsapp' %}
+            {% set href = wa(m.button_message or (m.body | striptags | trim) or m.title) %}
+          {% elif action == 'url' %}
+            {% set href = m.button_url %}
+          {% elif action == 'page' %}
+            {% set href = m.button_page or m.button_url %}
+          {% else %}
+            {% set href = '' %}
+          {% endif %}
+          {% if href %}
+          <a class="btn btn-primary modal-action" href="{{ href }}"{% if action in ['url', 'whatsapp'] %} target="_blank" rel="noopener"{% endif %}>{{ m.button_text }}</a>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 {% endblock %}
