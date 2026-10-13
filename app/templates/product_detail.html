@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero-sm">
+  <div class="container">
+    <nav class="breadcrumbs">
+      <a href="{{ url_for('public.index') }}">{{ t('bread_inicio') }}</a> <span>/</span>
+      <a href="{{ url_for('public.ventas') if product.available_for('venta') else url_for('public.alquiler') }}">{{ t('bread_catalogo') }}</a>
+      <span>/</span> {{ product.name }}
+    </nav>
+    <h1>{{ product.name }}</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container product-detail">
+    <div class="product-detail-media">
+      <img src="{{ product.image or url_for('static', filename='img/placeholder.svg') }}" alt="{{ product.name }}">
+    </div>
+    <div class="product-detail-info">
+      {% if product.category %}<span class="product-cat">{{ product.category.name }}</span>{% endif %}
+      <h2>{{ product.name }}</h2>
+      <p class="product-price lg">{{ product.price_display }}</p>
+      {% if product.summary %}<p class="lead">{{ product.summary }}</p>{% endif %}
+
+      <ul class="spec-list">
+        <li><strong>{{ t('producto_disponibilidad') }}</strong>
+          {% if product.availability == 'venta' %}{{ t('producto_venta') }}
+          {% elif product.availability == 'alquiler' %}{{ t('producto_alquiler') }}
+          {% else %}{{ t('producto_vapor') }}{% endif %}
+        </li>
+        {% if product.price is none %}
+        <li><strong>{{ t('producto_precio') }}</strong> {{ t('producto_consulte_wa') }}</li>
+        {% endif %}
+      </ul>
+
+      <div class="hero-actions">
+        <a class="btn btn-whatsapp" href="{{ wa }}" target="_blank" rel="noopener">
+          <svg class="icon"><use href="/static/img/icons.svg#whatsapp"></use></svg> {{ t('producto_consultar_wa') }}
+        </a>
+        <a class="btn btn-outline" href="{{ url_for('public.ventas') }}">{{ t('producto_volver') }}</a>
+      </div>
+
+      {% if product.description %}
+      <div class="rich-text product-description">
+        <h3>{{ t('producto_descripcion') }}</h3>
+        {{ product.description | safe }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

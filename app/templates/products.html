@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% set mode_title = t('catalogo_venta') if mode == 'venta' else t('catalogo_alquiler') %}
+{% block title %}{{ mode_title }} — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <nav class="breadcrumbs">
+      <a href="{{ url_for('public.index') }}">{{ t('bread_inicio') }}</a> <span>/</span> {{ mode_title }}
+    </nav>
+    <h1>{{ mode_title }}</h1>
+    <p>{{ settings.get('catalog_text_venta' if mode == 'venta' else 'catalog_text_alquiler',
+        'Articulos que necesita para que su proyecto sea un exito. Consulte disponibilidad y precios por WhatsApp.') }}</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <form class="filter-bar" method="get" action="{{ url_for('public.ventas' if mode == 'venta' else 'public.alquiler') }}">
+      <div class="filter-search">
+        <svg class="icon"><use href="/static/img/icons.svg#search"></use></svg>
+        <input type="search" name="q" value="{{ q }}" placeholder="{{ t('catalogo_buscar') }}" aria-label="Buscar">
+      </div>
+      <div class="filter-chips">
+        <a class="chip {{ 'chip-active' if not cat }}" href="{{ url_for('public.ventas' if mode == 'venta' else 'public.alquiler') }}">{{ t('catalogo_todos') }}</a>
+        {% for c in categories %}
+        <a class="chip {{ 'chip-active' if cat == c.slug }}"
+           href="{{ url_for('public.ventas' if mode == 'venta' else 'public.alquiler', cat=c.slug) }}">{{ c.name }}</a>
+        {% endfor %}
+      </div>
+      {% if q or cat %}
+      <a class="filter-clear" href="{{ url_for('public.ventas' if mode == 'venta' else 'public.alquiler') }}">{{ t('catalogo_limpiar') }}</a>
+      {% endif %}
+    </form>
+
+    {% if products %}
+    <div class="grid grid-4 product-grid">
+      {% for p in products %}
+      <article class="product-card">
+        <a class="product-media" href="{{ url_for('public.product_detail', slug=p.slug) }}">
+          <img src="{{ p.image or url_for('static', filename='img/placeholder.svg') }}" alt="{{ p.name }}" loading="lazy">
+          {% if p.availability == 'ambos' %}<span class="tag tag-both">{{ t('producto_vapor') }}</span>
+          {% elif p.availability == 'alquiler' %}<span class="tag">{{ t('producto_alquiler') }}</span>{% endif %}
+        </a>
+        <div class="product-body">
+          {% if p.category %}<span class="product-cat">{{ p.category.name }}</span>{% endif %}
+          <h3><a href="{{ url_for('public.product_detail', slug=p.slug) }}">{{ p.name }}</a></h3>
+          <p class="product-price">{{ p.price_display }}</p>
+          <div class="product-actions">
+            <a class="btn btn-outline btn-sm" href="{{ url_for('public.product_detail', slug=p.slug) }}">{{ t('link_ver_mas') }}</a>
+            <a class="btn btn-whatsapp btn-sm" href="{{ wa('Hola, estoy interesado en: ' + p.name) }}" target="_blank" rel="noopener">
+              <svg class="icon"><use href="/static/img/icons.svg#whatsapp"></use></svg>
+            </a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <nav class="pagination" aria-label="Paginacion">
+      {% if pagination.has_prev %}
+        <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num, q=q, cat=cat) }}">&laquo; {{ t('paginacion_anterior') }}</a>
+      {% endif %}
+      {% for p_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p_num %}
+          <a class="page-link {{ 'active' if p_num == pagination.page }}" href="{{ url_for(request.endpoint, page=p_num, q=q, cat=cat) }}">{{ p_num }}</a>
+        {% else %}
+          <span class="page-link ellipsis">&hellip;</span>
+        {% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}
+        <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num, q=q, cat=cat) }}">{{ t('paginacion_siguiente') }} &raquo;</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <p class="empty-state">{{ t('catalogo_empty') }}</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

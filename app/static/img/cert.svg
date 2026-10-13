@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 440">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c1c46"/>
+      <stop offset="1" stop-color="#123a75"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f59e2a"/>
+      <stop offset="1" stop-color="#e07b12"/>
+    </linearGradient>
+    <linearGradient id="seal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0fb5c9"/>
+      <stop offset="1" stop-color="#0a8fb0"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="440" fill="url(#bg)"/>
+  <g opacity="0.3" stroke="#ffffff" stroke-width="1">
+    <path d="M0 88h600M0 176h600M0 264h600M0 352h600M88 0v440M176 0v440M264 0v440M352 0v440M440 0v440M528 0v440"/>
+  </g>
+  <g transform="rotate(-6 300 220)">
+    <rect x="170" y="70" width="260" height="330" rx="14" fill="#ffffff"/>
+    <rect x="196" y="96" width="208" height="160" rx="8" fill="#eef4fb" stroke="#d7e4f1" stroke-width="2"/>
+    <g stroke="#0fb5c9" stroke-width="4" stroke-linecap="round" fill="none">
+      <circle cx="300" cy="148" r="26"/>
+      <path d="M300 106v14M300 176v14M258 148h14M328 148h14M272 120l10 10M318 166l10 10M328 120l-10 10M282 166l-10 10"/>
+    </g>
+    <circle cx="300" cy="148" r="12" fill="#f59e2a"/>
+    <line x1="224" y1="210" x2="376" y2="210" stroke="#0c1c46" stroke-width="10" stroke-linecap="round"/>
+    <line x1="240" y1="234" x2="360" y2="234" stroke="#b9cbe0" stroke-width="8" stroke-linecap="round"/>
+    <line x1="224" y1="286" x2="376" y2="286" stroke="#0c1c46" stroke-width="8" stroke-linecap="round"/>
+    <line x1="240" y1="308" x2="360" y2="308" stroke="#b9cbe0" stroke-width="8" stroke-linecap="round"/>
+    <g stroke="#0c1c46" stroke-width="7" stroke-linecap="round">
+      <path d="M240 210v34M300 238v34"/>
+    </g>
+    <path d="M185 336 l0 0 v-70 h40 z" fill="url(#ribbon)"/>
+    <path d="M415 336 l0 0 v-70 h-40 z" fill="url(#ribbon)"/>
+    <path d="M185 336 h90 l-12 22 h-66 z" fill="url(#ribbon)"/>
+    <path d="M415 336 h-90 l12 22 h66 z" fill="url(#ribbon)"/>
+    <circle cx="300" cy="352" r="26" fill="url(#seal)"/>
+    <circle cx="300" cy="352" r="19" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+    <path d="M293 344 l-5 8 14 3 6 8 2-14z" fill="#ffffff" opacity="0"/>
+    <polyline points="290 352 297 359 311 344" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

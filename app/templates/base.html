@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ settings.get('site_tagline', '') }}{% endblock %}">
+  <meta name="keywords" content="{{ settings.get('seo_keywords', 'comunicaciones, fibra optica, redes, telecomunicaciones, OTDR, fusionadoras, certificacion de equipos') }}">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="{{ settings.get('site_name', 'Telezar Comunicaciones') }}">
+  <meta name="theme-color" content="#0c1c46">
+  <link rel="canonical" href="{{ canonical_url }}">
+  <link rel="icon" href="{{ settings.get('favicon', '/static/img/logo.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta property="og:site_name" content="{{ settings.get('site_name', 'Telezar Comunicaciones') }}">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  <meta property="og:title" content="{{ self.title() | trim }}">
+  <meta property="og:description" content="{{ self.meta_description() | trim }}">
+  <meta property="og:image" content="{{ og_image }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ self.title() | trim }}">
+  <meta name="twitter:description" content="{{ self.meta_description() | trim }}">
+  <meta name="twitter:image" content="{{ og_image }}">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "{{ base_url }}/#website",
+        "name": "{{ settings.get('site_name', 'Telezar Comunicaciones') }}",
+        "url": "{{ base_url }}/",
+        "inLanguage": "es-ES",
+        "publisher": { "@id": "{{ base_url }}/#org" }
+      },
+      {
+        "@type": "{% if settings.get('address') %}LocalBusiness{% else %}Organization{% endif %}",
+        "@id": "{{ base_url }}/#org",
+        "name": "{{ settings.get('site_name', 'Telezar Comunicaciones') }}",
+        "description": "{{ settings.get('site_tagline', '') }}",
+        "url": "{{ base_url }}/",
+        "image": "{{ og_image }}",
+        "logo": "{{ og_image }}",
+        "email": "{{ settings.get('email_general') or settings.get('email_ventas') or '' }}",
+        "telephone": "{{ settings.get('phone') or settings.get('phone2') or '' }}",
+        {% if settings.get('address') %}"address": { "@type": "PostalAddress", "streetAddress": "{{ settings.get('address') }}" },{% endif %}
+        "openingHours": "{{ settings.get('schedule') or '' }}",
+        "sameAs": [{% for s in ['facebook', 'twitter', 'linkedin'] if settings.get(s) %}"{{ settings.get(s) }}"{% if not loop.last %},{% endif %}{% endfor %}]
+      }
+    ]
+  }
+  </script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="topbar">
+    <div class="container topbar-inner">
+      <span class="topbar-item">
+        <svg class="icon"><use href="/static/img/icons.svg#phone"></use></svg>
+        <a href="tel:{{ settings.get('phone', '') | replace(' ', '') }}">{{ settings.get('phone', '') }}</a>
+        {% if settings.get('phone2') %}<span class="topbar-sep">|</span><a href="tel:{{ settings.get('phone2') | replace(' ', '') }}">{{ settings.get('phone2') }}</a>{% endif %}
+      </span>
+      <span class="topbar-item topbar-item-emails">
+        <svg class="icon"><use href="/static/img/icons.svg#mail"></use></svg>
+        <a href="mailto:{{ settings.get('email_general', '') }}">{{ settings.get('email_general', '') }}</a>
+      </span>
+      <span class="topbar-socials">
+        {% if settings.get('facebook') %}<a href="{{ settings.get('facebook') }}" target="_blank" rel="noopener" aria-label="Facebook"><svg class="icon"><use href="/static/img/icons.svg#facebook"></use></svg></a>{% endif %}
+        {% if settings.get('twitter') %}<a href="{{ settings.get('twitter') }}" target="_blank" rel="noopener" aria-label="Twitter"><svg class="icon"><use href="/static/img/icons.svg#twitter"></use></svg></a>{% endif %}
+        {% if settings.get('linkedin') %}<a href="{{ settings.get('linkedin') }}" target="_blank" rel="noopener" aria-label="LinkedIn"><svg class="icon"><use href="/static/img/icons.svg#linkedin"></use></svg></a>{% endif %}
+      </span>
+    </div>
+  </div>
+
+  <header class="site-header" id="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="{{ url_for('public.index') }}">
+        <img src="{{ settings.get('site_logo') or url_for('static', filename='img/logo.png') }}" alt="{{ settings.get('site_name', 'Telezar Comunicaciones') }}">
+        <span class="brand-text">
+          <strong>{{ settings.get('site_name', 'TELEZAR COMUNICACIONES') }}</strong>
+          <small>{{ settings.get('site_tagline', '') }}</small>
+        </span>
+      </a>
+
+      <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+        <svg class="icon icon-menu"><use href="/static/img/icons.svg#menu"></use></svg>
+        <svg class="icon icon-close"><use href="/static/img/icons.svg#close"></use></svg>
+      </button>
+
+      <nav class="main-nav" id="main-nav" aria-label="Menu principal">
+        <ul class="nav-list">
+          <li><a href="{{ url_for('public.index') }}" class="{{ 'active' if request.path == '/' }}">{{ t('nav_inicio') }}</a></li>
+          <li><a href="{{ url_for('public.nosotros') }}" class="{{ 'active' if request.path.startswith('/nosotros') }}">{{ t('nav_nosotros') }}</a></li>
+          <li class="has-sub {{ 'active' if request.path in ['/servicios', '/ventas', '/alquiler'] or request.path.startswith('/producto') }}">
+            <a href="{{ url_for('public.services') }}">{{ t('nav_servicios') }}
+              <svg class="icon icon-caret"><use href="/static/img/icons.svg#caret"></use></svg>
+            </a>
+            <ul class="submenu">
+              <li><a href="{{ url_for('public.services') }}">{{ t('nav_servicios_todos') }}</a></li>
+              <li><a href="{{ url_for('public.ventas') }}">{{ t('nav_ventas') }}</a></li>
+              <li><a href="{{ url_for('public.alquiler') }}">{{ t('nav_alquiler') }}</a></li>
+              <li><a href="{{ url_for('public.capacitaciones') }}">{{ t('nav_capacitaciones') }}</a></li>
+              <li><a href="{{ url_for('public.soporte') }}">{{ t('nav_soporte') }}</a></li>
+            </ul>
+          </li>
+          <li><a href="{{ url_for('public.certificados') }}" class="{{ 'active' if request.path.startswith('/certificados') }}">{{ t('nav_certificados') }}</a></li>
+          <li><a href="{{ url_for('public.contacto') }}" class="{{ 'active' if request.path.startswith('/contacto') }}">{{ t('nav_contacto') }}</a></li>
+          <li><a href="{{ url_for('auth.login') }}" class="{{ 'active' if request.path.startswith('/admin') }}">{{ t('nav_ingresar') }}</a></li>
+          {% for p in nav_pages %}
+            {% if p.slug not in ['nosotros', 'capacitaciones', 'soporte'] and p.show_in_nav %}
+            <li><a href="/{{ p.slug }}" class="{{ 'active' if request.path == '/' + p.slug }}">{{ p.title }}</a></li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+        <a class="btn btn-whatsapp btn-sm nav-cta" href="{{ whatsapp_url }}" target="_blank" rel="noopener">
+          <svg class="icon"><use href="/static/img/icons.svg#whatsapp"></use></svg> {{ t('nav_cotizar') }}
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-col footer-about">
+        <img class="footer-logo" src="{{ settings.get('site_logo') or url_for('static', filename='img/logo.png') }}" alt="{{ settings.get('site_name') }}">
+        <p>{{ settings.get('footer_text', '') }}</p>
+        <div class="footer-socials">
+          {% if settings.get('facebook') %}<a href="{{ settings.get('facebook') }}" target="_blank" rel="noopener" aria-label="Facebook"><svg class="icon"><use href="/static/img/icons.svg#facebook"></use></svg></a>{% endif %}
+          {% if settings.get('twitter') %}<a href="{{ settings.get('twitter') }}" target="_blank" rel="noopener" aria-label="Twitter"><svg class="icon"><use href="/static/img/icons.svg#twitter"></use></svg></a>{% endif %}
+          {% if settings.get('linkedin') %}<a href="{{ settings.get('linkedin') }}" target="_blank" rel="noopener" aria-label="LinkedIn"><svg class="icon"><use href="/static/img/icons.svg#linkedin"></use></svg></a>{% endif %}
+          <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg class="icon"><use href="/static/img/icons.svg#whatsapp"></use></svg></a>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>{{ t('footer_menu') }}</h4>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('public.index') }}">{{ t('nav_inicio') }}</a></li>
+          <li><a href="{{ url_for('public.nosotros') }}">{{ t('nav_nosotros') }}</a></li>
+          <li><a href="{{ url_for('public.services') }}">{{ t('nav_servicios') }}</a></li>
+          <li><a href="{{ url_for('public.ventas') }}">{{ t('nav_ventas') }}</a></li>
+          <li><a href="{{ url_for('public.alquiler') }}">{{ t('nav_alquiler') }}</a></li>
+          <li><a href="{{ url_for('public.contacto') }}">{{ t('nav_contacto') }}</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>{{ t('footer_servicios') }}</h4>
+        <ul class="footer-links">
+          {% for s in nav_services[:6] %}
+          <li><a href="{{ url_for('public.services') }}">{{ s.title }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>{{ t('footer_contactanos') }}</h4>
+        <ul class="footer-contact">
+          {% if settings.get('phone') %}
+          <li><svg class="icon"><use href="/static/img/icons.svg#phone"></use></svg>
+            <a href="tel:{{ settings.get('phone') | replace(' ', '') }}">{{ settings.get('phone') }}</a></li>
+          {% endif %}
+          {% if settings.get('phone2') %}
+          <li><svg class="icon"><use href="/static/img/icons.svg#phone"></use></svg>
+            <a href="tel:{{ settings.get('phone2') | replace(' ', '') }}">{{ settings.get('phone2') }}</a></li>
+          {% endif %}
+          {% if settings.get('email_general') %}
+          <li><svg class="icon"><use href="/static/img/icons.svg#mail"></use></svg>
+            <a href="mailto:{{ settings.get('email_general') }}">{{ settings.get('email_general') }}</a></li>
+          {% endif %}
+          {% if settings.get('email_ventas') %}
+          <li><svg class="icon"><use href="/static/img/icons.svg#mail"></use></svg>
+            <a href="mailto:{{ settings.get('email_ventas') }}">{{ settings.get('email_ventas') }}</a></li>
+          {% endif %}
+          {% if settings.get('address') %}
+          <li><svg class="icon"><use href="/static/img/icons.svg#pin"></use></svg>
+            <span>{{ settings.get('address') }}</span></li>
+          {% endif %}
+          {% if settings.get('schedule') %}
+          <li><svg class="icon"><use href="/static/img/icons.svg#clock"></use></svg>
+            <span>{{ settings.get('schedule') }}</span></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="container">
+        <p>{{ settings.get('copyright', '') }} &copy; {{ current_year }}. Todos los derechos reservados.</p>
+        <p class="footer-credit">
+          Desarrollada por:
+          <a href="https://wa.me/573104757166" target="_blank" rel="noopener">Ing. Andrés Sánchez</a>
+        </p>
+        <!-- <a class="footer-admin" href="{{ url_for('auth.login') }}">{{ t('footer_administracion') }}</a> -->
+      </div>
+    </div>
+  </footer>
+
+  <a class="floating-wa" href="{{ whatsapp_url }}" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <svg class="icon"><use href="/static/img/icons.svg#whatsapp"></use></svg>
+  </a>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="toast-stack" id="toast-stack">
+      {% for category, msg in messages %}
+      <div class="toast toast-{{ category }}">
+        <span>{{ msg }}</span>
+        <button class="toast-close" aria-label="Cerrar">&times;</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

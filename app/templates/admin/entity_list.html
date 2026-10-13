@@ -1,0 +1,84 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ entity.label }}{% endblock %}
+{% block admin_title %}{{ entity.label }}{% endblock %}
+
+{% macro cell(item, col) %}
+  {% set val = item | attr(col.name) %}
+  {% if col.type == 'bool' %}
+    {% if val %}<span class="pill pill-ok">Si</span>{% else %}<span class="pill">No</span>{% endif %}
+  {% elif col.type == 'image' %}
+    {% if val %}<img class="thumb" src="{{ val }}" alt="">{% else %}<span class="muted">—</span>{% endif %}
+  {% elif col.type == 'price' %}
+    {{ item.price_display }}
+  {% elif col.type == 'date' %}
+    {{ val | date_es }}
+  {% elif col.choices %}
+    {% set ns = namespace(text=val or '—') %}
+    {% for cv, cl in col.choices %}{% if cv == val %}{% set ns.text = cl %}{% endif %}{% endfor %}
+    {{ ns.text }}
+  {% else %}
+    {{ val or '—' }}
+  {% endif %}
+{% endmacro %}
+
+{% block admin_content %}
+<div class="toolbar">
+  <div>
+    <a class="btn btn-primary" href="{{ url_for('admin.entity_create', entity_key=entity.key) }}">+ Nuevo {{ entity.singular }}</a>
+    {% if q %}<a class="btn btn-outline" href="{{ url_for('admin.entity_list', entity_key=entity.key) }}">Limpiar busqueda</a>{% endif %}
+  </div>
+  <form class="toolbar-search" method="get" action="{{ url_for('admin.entity_list', entity_key=entity.key) }}">
+    <input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Buscar en {{ entity.label | lower }}...">
+    <button class="btn btn-outline btn-sm" type="submit">Buscar</button>
+  </form>
+</div>
+
+{% if items %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        {% for col in entity.columns %}<th>{{ col.label }}</th>{% endfor %}
+        <th class="td-actions">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        {% for col in entity.columns %}<td>{{ cell(item, col) }}</td>{% endfor %}
+        <td class="td-actions">
+          <a class="btn btn-outline btn-xs" href="{{ url_for('admin.entity_edit', entity_key=entity.key, item_id=item.id) }}">Editar</a>
+          <form class="inline-form" method="post" action="{{ url_for('admin.entity_delete', entity_key=entity.key, item_id=item.id) }}"
+                data-confirm="¿Eliminar este {{ entity.singular }}?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-danger btn-xs" type="submit">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<nav class="pagination" aria-label="Paginacion">
+  {% if pagination.has_prev %}
+    <a class="page-link" href="{{ url_for('admin.entity_list', entity_key=entity.key, page=pagination.prev_num, q=q) }}">&laquo; Anterior</a>
+  {% endif %}
+  {% for p_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+    {% if p_num %}
+      <a class="page-link {{ 'active' if p_num == pagination.page }}" href="{{ url_for('admin.entity_list', entity_key=entity.key, page=p_num, q=q) }}">{{ p_num }}</a>
+    {% else %}
+      <span class="page-link ellipsis">&hellip;</span>
+    {% endif %}
+  {% endfor %}
+  {% if pagination.has_next %}
+    <a class="page-link" href="{{ url_for('admin.entity_list', entity_key=entity.key, page=pagination.next_num, q=q) }}">Siguiente &raquo;</a>
+  {% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<p class="empty-state">Aun no hay {{ entity.label | lower }} registrados.</p>
+{% endif %}
+{% endblock %}

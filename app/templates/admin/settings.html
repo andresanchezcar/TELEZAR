@@ -1,0 +1,37 @@
+{% extends "admin/base.html" %}
+{% block title %}Ajustes del sitio{% endblock %}
+{% block admin_title %}Ajustes del sitio{% endblock %}
+
+{% block admin_content %}
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  {% for section, rows in sections.items() %}
+  <section class="panel">
+    <div class="panel-head"><h2>{{ section }}</h2></div>
+    <div class="settings-grid">
+      {% for s in rows %}
+      <div class="form-group">
+        <label for="s-{{ s.key }}">{{ s.label or s.key }}</label>
+        {% if s.field_type == 'textarea' %}
+          <textarea class="form-control" id="s-{{ s.key }}" name="value_{{ s.key }}" rows="3">{{ s.value or '' }}</textarea>
+        {% elif s.field_type == 'textarea-big' %}
+          <textarea class="form-control" id="s-{{ s.key }}" name="value_{{ s.key }}" rows="6">{{ s.value or '' }}</textarea>
+        {% elif s.field_type == 'image' %}
+          {% if s.value %}<div class="upload-preview"><img src="{{ s.value }}" alt=""><a class="upload-remove" href="{{ s.value }}" target="_blank" rel="noopener">Ver</a></div>{% endif %}
+          <input class="form-file" type="file" id="s-{{ s.key }}" name="file_{{ s.key }}" accept="image/*">
+          <input class="form-control" type="text" name="value_{{ s.key }}" value="{{ s.value or '' }}" placeholder="o ruta manual /uploads/...">
+        {% else %}
+          <input class="form-control" type="text" id="s-{{ s.key }}" name="value_{{ s.key }}" value="{{ s.value or '' }}">
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Guardar ajustes</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+{% block title %}Mensajes de contacto{% endblock %}
+{% block admin_title %}Mensajes de contacto{% endblock %}
+
+{% block admin_content %}
+{% if items %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr><th>De</th><th>Asunto</th><th>Fecha</th><th>Estado</th><th class="td-actions">Acciones</th></tr>
+    </thead>
+    <tbody>
+      {% for m in items %}
+      <tr class="{{ '' if m.is_read else 'row-unread' }}">
+        <td>
+          <strong>{{ m.name }}</strong><br>
+          <small>{{ m.email or '' }}{% if m.email and m.phone %} · {% endif %}{{ m.phone or '' }}</small>
+        </td>
+        <td>{{ m.subject or (m.message | striptags | truncate(60)) }}</td>
+        <td>{{ m.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>
+          {% if m.is_read %}<span class="pill">Leido</span>
+          {% else %}<span class="pill pill-ok">Nuevo</span>{% endif %}
+        </td>
+        <td class="td-actions">
+          <a class="btn btn-outline btn-xs" href="{{ url_for('admin.message_detail', item_id=m.id) }}">Abrir</a>
+          <form class="inline-form" method="post" action="{{ url_for('admin.message_toggle', item_id=m.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline btn-xs" type="submit">{{ 'Marcar como nuevo' if m.is_read else 'Marcar leido' }}</button>
+          </form>
+          <form class="inline-form" method="post" action="{{ url_for('admin.message_delete', item_id=m.id) }}"
+                data-confirm="¿Eliminar este mensaje?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-danger btn-xs" type="submit">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<nav class="pagination" aria-label="Paginacion">
+  {% if pagination.has_prev %}
+    <a class="page-link" href="{{ url_for('admin.messages', page=pagination.prev_num) }}">&laquo; Anterior</a>
+  {% endif %}
+  {% for p_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+    {% if p_num %}
+      <a class="page-link {{ 'active' if p_num == pagination.page }}" href="{{ url_for('admin.messages', page=p_num) }}">{{ p_num }}</a>
+    {% else %}
+      <span class="page-link ellipsis">&hellip;</span>
+    {% endif %}
+  {% endfor %}
+  {% if pagination.has_next %}
+    <a class="page-link" href="{{ url_for('admin.messages', page=pagination.next_num) }}">Siguiente &raquo;</a>
+  {% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<p class="empty-state">No hay mensajes de contacto.</p>
+{% endif %}
+{% endblock %}

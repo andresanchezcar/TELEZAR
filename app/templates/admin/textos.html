@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+{% block title %}Textos del sitio{% endblock %}
+{% block admin_title %}Textos del sitio{% endblock %}
+
+{% block admin_content %}
+<p class="admin-hint">
+  Estos textos aparecen en el menu, el footer y las secciones de la pagina. Al cambiarlos se
+  actualiza el sitio al instante, sin tocar codigo.
+</p>
+
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <section class="panel">
+    <div class="panel-head"><h2>Etiquetas editables</h2></div>
+    <div class="settings-grid">
+      {% for key, default in labels.items() %}
+      <div class="form-group">
+        <label for="label-{{ key }}">{{ default }}</label>
+        <input class="form-control" type="text" id="label-{{ key }}" name="label_{{ key }}"
+               value="{{ labels_overrides.get(key, default) }}">
+        <small class="field-help">{{ key }}</small>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Guardar textos</button>
+  </div>
+</form>
+{% endblock %}

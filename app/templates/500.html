@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Error del servidor — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
+{% block content %}
+<section class="section error-page">
+  <div class="container container-narrow" style="text-align:center">
+    <p class="error-code">500</p>
+    <h1>{{ t('error_500_title') }}</h1>
+    <p>{{ t('error_500_text') }}</p>
+    <a class="btn btn-primary" href="{{ url_for('public.index') }}">{{ t('error_volver_inicio') }}</a>
+  </div>
+</section>
+{% endblock %}

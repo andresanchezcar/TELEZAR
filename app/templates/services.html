@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ t('bread_servicios') }} — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <nav class="breadcrumbs"><a href="{{ url_for('public.index') }}">{{ t('bread_inicio') }}</a> <span>/</span> {{ t('bread_servicios') }}</nav>
+    <h1>{{ t('servicios_title') }}</h1>
+    <p>{{ t('servicios_intro') }}</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    {% if services %}
+    <div class="grid grid-2 service-rows">
+      {% for s in services %}
+      <article class="service-panel">
+        <div class="service-panel-media">
+          <img src="{{ s.image or url_for('static', filename='img/placeholder.svg') }}" alt="{{ s.title }}" loading="lazy">
+        </div>
+        <div class="service-panel-body">
+          <div class="service-icon sm">
+            <svg class="icon"><use href="/static/img/icons.svg#{{ s.icon or 'fiber' }}"></use></svg>
+          </div>
+          <h2>{{ s.title }}</h2>
+          <p>{{ s.excerpt }}</p>
+          {% if s.body %}
+          <div class="rich-text">{{ s.body | safe }}</div>
+          {% endif %}
+          <a class="btn btn-primary btn-sm" href="{{ wa('Hola, necesito informacion sobre: ' + s.title) }}" target="_blank" rel="noopener">
+            {{ t('btn_contactanos') }}
+          </a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-state">{{ t('servicios_empty') }}</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

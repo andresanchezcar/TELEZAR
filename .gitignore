@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Entorno
+.env
+
+# Clave secreta generada automaticamente
+instance/.secret_key
+
+# Subidas de archivos (imágenes administrables)
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+
+# IDE / SO
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
