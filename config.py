@@ -40,8 +40,11 @@ class Config:
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 300}
 
     UPLOAD_FOLDER = os.path.join(BASEDIR, "app", "static", "uploads")
-    MAX_CONTENT_LENGTH = 8 * 1024 * 1024  # 8 MB por archivo
-    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "pdf"}
+    MAX_CONTENT_LENGTH = 64 * 1024 * 1024  # 64 MB por archivo (permite video)
+    ALLOWED_EXTENSIONS = {
+        "png", "jpg", "jpeg", "gif", "webp", "pdf",
+        "mp4", "webm", "ogv", "mov",
+    }
 
     # Cookies de sesion
     SESSION_COOKIE_HTTPONLY = True

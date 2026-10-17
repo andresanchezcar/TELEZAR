@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}{{ cert.title or cert.type_label }} {{ cert.serial }} — {{ settings.get('site_name', 'Telezar Comunicaciones') }}{% endblock %}
+{% block meta_description %}{{ cert.type_label }} del equipo {{ cert.equipment }} (Serie {{ cert.serial }}) emitido por {{ settings.get('site_name') }}.{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+{% set attached = cert.is_attachment_mode and cert.file_url %}
+<section class="section cert-view">
+  <div class="container">
+    <div class="cert-toolbar no-print">
+      <a class="btn btn-outline btn-sm" href="{{ url_for('public.certificados') }}">
+        <svg class="icon"><use href="/static/img/icons.svg#search"></use></svg> {{ t('nav_certificados') }}
+      </a>
+      <div class="cert-toolbar-actions">
+        {% if attached %}
+        <a class="btn btn-primary btn-sm" href="{{ cert.file_url }}" target="_blank" rel="noopener">
+          <svg class="icon"><use href="/static/img/icons.svg#file"></use></svg> {{ t('cert_descargar_pdf') }}
+        </a>
+        {% else %}
+        <a class="btn btn-outline btn-sm" href="{{ url_for('public.certificate_pdf', code=cert.verify_code) }}" target="_blank" rel="noopener">
+          <svg class="icon"><use href="/static/img/icons.svg#file"></use></svg> {{ t('cert_descargar_pdf') }}
+        </a>
+        {% if cert.file_url %}
+        <a class="btn btn-outline btn-sm" href="{{ cert.file_url }}" target="_blank" rel="noopener">{{ t('cert_pdf_adjunto') }}</a>
+        {% endif %}
+        {% endif %}
+        <button class="btn btn-primary btn-sm" type="button" data-print>{{ t('cert_imprimir') }}</button>
+      </div>
+    </div>
+
+    <div class="cert-status cert-status-{{ 'ok' if cert.is_current else ('expired' if cert.published else 'revoked') }} no-print">
+      <svg class="icon"><use href="/static/img/icons.svg#{{ 'shield' if cert.is_current else 'close' }}"></use></svg>
+      {% if not cert.published %}
+        {{ t('cert_revocado') }}
+      {% elif cert.is_current %}
+        {{ t('cert_vigente') }}
+      {% else %}
+        {{ t('cert_vencido') }}
+      {% endif %}
+    </div>
+
+    {% if attached %}
+    <div class="cert-embed">
+      <iframe src="{{ cert.file_url }}" title="{{ cert.title or cert.type_label }}" loading="lazy"></iframe>
+    </div>
+    <div class="cert-verify-card no-print">
+      <img src="{{ qr_url }}" alt="Código QR de verificación" width="120" height="120">
+      <div>
+        <strong>{{ t('cert_verificar_titulo') }}</strong>
+        <p>{{ t('cert_verificar_texto') }}</p>
+        <p><a href="{{ verify_url }}" target="_blank" rel="noopener">{{ verify_url }}</a></p>
+      </div>
+    </div>
+    {% else %}
+    <article class="cert-sheet">
+      {% set mech = cert.mech %}
+      <header class="cert-doc-head">
+        <div class="cert-doc-brand">
+          <img src="{{ settings.get('site_logo') or url_for('static', filename='img/logo.png') }}" alt="{{ settings.get('site_name') }}">
+          <div>
+            <strong>{{ settings.get('site_name', 'TELEZAR COMUNICACIONES') }}</strong>
+            {% if settings.get('company_nit') %}<span>NIT: {{ settings.get('company_nit') }}</span>{% endif %}
+            {% if settings.get('company_legal_rep') %}<span>{{ settings.get('company_legal_rep') }}</span>{% endif %}
+          </div>
+        </div>
+        <div class="cert-doc-meta">
+          {% if cert.code %}<span>Código: <strong>{{ cert.code }}</strong></span>{% endif %}
+          {% if cert.device_type %}<span>Dispositivo: {{ cert.device_label }}</span>{% endif %}
+          {% if cert.issued_date %}<span>Emitido: {{ cert.issued_date | date_es }}</span>{% endif %}
+        </div>
+      </header>
+
+      <h1 class="cert-doc-title">{{ cert.title or cert.type_label }}</h1>
+
+      {% if cert.device_type == 'mecanica' %}
+      {% if mech.legal %}<p class="cert-legal">{{ mech.legal }}</p>{% endif %}
+      {% if mech.actions %}
+      <section class="cert-block">
+        <h2>Actividades realizadas</h2>
+        <ul class="cert-list">
+          {% for action in mech.actions %}<li>{{ action }}</li>{% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+      {% endif %}
+
+      <section class="cert-block">
+        <h2>Datos del cliente</h2>
+        <dl class="cert-data">
+          <div><dt>Razón social</dt><dd>{{ cert.client or '—' }}</dd></div>
+          <div><dt>Documento y/o NIT</dt><dd>{{ cert.client_doc or '—' }}</dd></div>
+          <div><dt>Correo electrónico</dt><dd>{{ cert.client_email or '—' }}</dd></div>
+          {% if cert.client_address %}<div><dt>Dirección</dt><dd>{{ cert.client_address }}</dd></div>{% endif %}
+        </dl>
+      </section>
+
+      <section class="cert-block">
+        <h2>Datos del equipo a certificar</h2>
+        <dl class="cert-data">
+          <div><dt>Equipo</dt><dd>{{ cert.equipment or '—' }}</dd></div>
+          <div><dt>Marca</dt><dd>{{ cert.equipment_brand or '—' }}</dd></div>
+          <div><dt>Modelo</dt><dd>{{ cert.equipment_model or '—' }}</dd></div>
+          <div><dt>Número de serie</dt><dd>{{ cert.serial or '—' }}</dd></div>
+          {% if cert.device_type == 'opm' %}
+          <div><dt>Incertidumbre (%)</dt><dd>{{ cert.uncertainty or '—' }}</dd></div>
+          <div><dt>Longitud de onda estándar</dt><dd>{{ cert.std_wavelength or '—' }}</dd></div>
+          {% endif %}
+          <div><dt>Fecha de calibración</dt><dd>{{ cert.issued_date | date_es if cert.issued_date else '—' }}</dd></div>
+          <div><dt>Próxima calibración</dt><dd>{{ cert.next_date | date_es if cert.next_date else '—' }}</dd></div>
+        </dl>
+      </section>
+
+      {% if cert.device_type == 'mecanica' and mech.patrones %}
+      <section class="cert-block">
+        <h2>Patrones utilizados</h2>
+        <div class="table-wrap">
+          <table class="cert-table">
+            <thead>
+              <tr>
+                <th>Descripción</th>
+                <th>Fabricante</th>
+                <th>Modelo</th>
+                <th>N° de serie</th>
+                <th>N° certificado</th>
+                <th>Vence</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in mech.patrones %}
+              <tr>
+                <td>{{ row.descripcion or '—' }}</td>
+                <td>{{ row.fabricante or '—' }}</td>
+                <td>{{ row.modelo or '—' }}</td>
+                <td>{{ row.serie or '—' }}</td>
+                <td>{{ row.certificado or '—' }}</td>
+                <td>{{ row.vence or '—' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {% endif %}
+
+      {% if cert.device_type == 'mecanica' and mech.env_parts %}
+      <section class="cert-block">
+        <h2>Condiciones ambientales de ajuste y calibración</h2>
+        <dl class="cert-data">
+          {% for label, value in mech.env_parts %}
+          <div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
+          {% endfor %}
+        </dl>
+      </section>
+      {% endif %}
+
+      {% if cert.device_type == 'opm' %}
+      <section class="cert-block">
+        <h2>Estudio de calibración</h2>
+        <div class="table-wrap">
+          <table class="cert-table">
+            <thead>
+              <tr>
+                <th>Prueba No.</th>
+                <th>Longitud de onda (nm)</th>
+                <th>Potencia (dBm)</th>
+                <th>Valor longitud de onda (±0.020 nm)</th>
+                <th>Aprobado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for test in cert.tests %}
+              <tr>
+                <td>{{ test.test_no or loop.index }}</td>
+                <td>{{ test.wavelength or '—' }}</td>
+                <td>{{ test.power or '—' }}</td>
+                <td>{{ test.wavelength_value or '—' }}</td>
+                <td>{% if test.approved %}<span class="cert-pass">Sí</span>{% else %}<span class="cert-fail">No</span>{% endif %}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="cert-empty">Sin pruebas registradas.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="cert-block">
+        <h2>Datos del equipo de prueba</h2>
+        {% set equipos = cert.test_equipments %}
+        <dl class="cert-data">
+          {% if equipos %}
+          {% for eq in equipos %}
+          <div><dt>Equipo de prueba (patrón)</dt><dd>{{ eq }}</dd></div>
+          {% endfor %}
+          {% else %}
+          <div><dt>Equipo de prueba (patrón)</dt><dd>—</dd></div>
+          {% endif %}
+        </dl>
+      </section>
+      {% endif %}
+
+      {% if cert.device_type == 'otdr' %}
+      {% set otdr = cert.otdr %}
+      {% if otdr.env_parts %}
+      <section class="cert-block">
+        <h2>Condiciones de la calibración</h2>
+        <dl class="cert-data">
+          {% for label, value in otdr.env_parts %}
+          <div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
+          {% endfor %}
+        </dl>
+      </section>
+      {% endif %}
+
+      {% for cal in otdr.distance %}
+      <section class="cert-block">
+        <h2>Calibración distancia{% if cal.wavelength %} {{ cal.wavelength }} nm{% endif %}</h2>
+        <div class="table-wrap">
+          <table class="cert-table">
+            <thead>
+              <tr>
+                <th>Patrón</th>
+                <th>Valor inicial</th>
+                <th>Muestra 1</th>
+                <th>Muestra 2</th>
+                <th>Muestra 3</th>
+                <th>Muestra 4</th>
+                <th>Muestra 5</th>
+                <th>Promedio</th>
+                <th>Desviación ST</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in cal.rows %}
+              <tr>
+                <td>{{ row.pattern or '—' }}</td>
+                <td>{{ row.initial or '—' }}</td>
+                {% for s in row.samples %}<td>{{ s or '—' }}</td>{% endfor %}
+                <td>{{ row.mean or '—' }}</td>
+                <td>{{ row.stdev or '—' }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="9" class="cert-empty">Sin datos registrados.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% set chart3d = distance_chart_3d(cal.chart) %}
+        {% if chart3d %}
+        <div class="cert-chart cert-chart-3d"><img src="{{ chart3d }}" alt="Gráfica 3D de calibración de distancia"></div>
+        {% else %}
+        <div class="cert-chart">{{ line_chart(cal.chart) | safe }}</div>
+        {% endif %}
+      </section>
+      {% endfor %}
+
+      {% for cal in otdr.attenuation %}
+      <section class="cert-block">
+        <h2>Calibración atenuaciones{% if cal.wavelength %} {{ cal.wavelength }} nm{% endif %}</h2>
+        <div class="table-wrap">
+          <table class="cert-table">
+            <thead>
+              <tr>
+                <th>Evento</th>
+                <th>Valor patrón</th>
+                <th>Muestra 1</th>
+                <th>Muestra 2</th>
+                <th>Muestra 3</th>
+                <th>Muestra 4</th>
+                <th>Muestra 5</th>
+                <th>Promedio</th>
+                <th>Desviación ST</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in cal.rows %}
+              <tr>
+                <td>{{ row.event or '—' }}</td>
+                <td>{{ row.pattern or '—' }}</td>
+                {% for s in row.samples %}<td>{{ s or '—' }}</td>{% endfor %}
+                <td>{{ row.mean or '—' }}</td>
+                <td>{{ row.stdev or '—' }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="9" class="cert-empty">Sin datos registrados.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% set chart3d = attenuation_chart_3d(cal.chart) %}
+        {% if chart3d %}
+        <div class="cert-chart cert-chart-3d"><img src="{{ chart3d }}" alt="Gráfica 3D de calibración de atenuaciones"></div>
+        {% else %}
+        <div class="cert-chart">{{ line_chart(cal.chart) | safe }}</div>
+        {% endif %}
+      </section>
+      {% endfor %}
+
+      {% if otdr.patterns %}
+      <section class="cert-block">
+        <h2>Patrones utilizados</h2>
+        <ul class="cert-list">
+          {% for item in otdr.patterns %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+
+      {% if otdr.methods %}
+      <section class="cert-block">
+        <h2>Métodos utilizados</h2>
+        <ul class="cert-list">
+          {% for item in otdr.methods %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+
+      <section class="cert-block cert-block-legend">
+        <p class="cert-legend">{{ otdr.legend }}</p>
+      </section>
+      {% endif %}
+
+      <section class="cert-block cert-block-sign">
+        <div class="cert-sign">
+          <div class="cert-sign-line">
+            {% if cert.signature %}<img class="cert-sign-img" src="{{ cert.signature }}" alt="Firma de quien certifica">{% endif %}
+            {% if cert.certifier %}<strong>{{ cert.certifier }}</strong>{% endif %}
+            {% if cert.certifier_role %}<span>{{ cert.certifier_role }}</span>{% endif %}
+            <span>Quien certifica</span>
+          </div>
+          <div class="cert-qr">
+            <img src="{{ qr_url }}" alt="Código QR de verificación" width="140" height="140">
+            <small>Escanee para verificar<br>{{ t('cert_verificar_titulo') }}</small>
+          </div>
+        </div>
+      </section>
+
+      <footer class="cert-doc-foot">
+        <span>{{ settings.get('site_name') }}</span>
+        {% if settings.get('address') %}<span>{{ settings.get('address') }}</span>{% endif %}
+        {% if settings.get('phone') %}<span>Tel: {{ settings.get('phone') }}{% if settings.get('phone2') %} / {{ settings.get('phone2') }}{% endif %}</span>{% endif %}
+        {% if settings.get('email_general') %}<span>{{ settings.get('email_general') }}</span>{% endif %}
+        {% if settings.get('email_ventas') %}<span>{{ settings.get('email_ventas') }}</span>{% endif %}
+      </footer>
+    </article>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

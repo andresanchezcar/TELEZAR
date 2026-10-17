@@ -21,7 +21,14 @@ from app.models import (
     Product,
     Service,
 )
-from app.utils import base_context
+from app.pdf import REPORTLAB_AVAILABLE, build_certificate_pdf
+from app.qr import qr_png
+from app.utils import (
+    base_context,
+    company_logo_path,
+    get_base_url,
+    upload_abspath,
+)
 
 public_bp = Blueprint("public", __name__)
 
@@ -203,12 +210,78 @@ def certificados():
                     Certificate.serial.like(like),
                     Certificate.client.like(like),
                     Certificate.equipment.like(like),
+                    Certificate.code.like(like),
                 ),
             )
             .order_by(Certificate.issued_date.desc())
             .all()
         )
     return render_template("certificates.html", q=q, results=results)
+
+
+def _find_certificate(code):
+    cert = Certificate.query.filter_by(code=code).first()
+    if cert is None and code.isdigit():
+        cert = db.session.get(Certificate, int(code))
+    return cert
+
+
+def _verify_url(cert):
+    base = get_base_url(base_context()["settings"])
+    return base + url_for("public.certificate_detail", code=cert.verify_code)
+
+
+@public_bp.route("/certificado/<code>")
+def certificate_detail(code):
+    cert = _find_certificate(code)
+    if cert is None:
+        abort(404)
+    return render_template(
+        "certificate.html",
+        cert=cert,
+        qr_url=url_for("public.certificate_qr", code=cert.verify_code),
+        verify_url=_verify_url(cert),
+    )
+
+
+@public_bp.route("/certificado/<code>/qr.png")
+def certificate_qr(code):
+    cert = _find_certificate(code)
+    if cert is None:
+        abort(404)
+    png = qr_png(_verify_url(cert), logo_path=company_logo_path())
+    if png is None:
+        abort(404)
+    response = Response(png, mimetype="image/png")
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
+
+@public_bp.route("/certificado/<code>/certificado.pdf")
+def certificate_pdf(code):
+    cert = _find_certificate(code)
+    if cert is None:
+        abort(404)
+    # Si el certificado fue anexado (no generado), se muestra el archivo subido.
+    if cert.is_attachment_mode and cert.file_url:
+        return redirect(cert.file_url)
+    if not REPORTLAB_AVAILABLE:
+        abort(503, description="La generacion de PDF no esta disponible.")
+    settings = base_context()["settings"]
+    logo = company_logo_path()
+    qr = qr_png(_verify_url(cert), logo_path=logo)
+    pdf_bytes = build_certificate_pdf(
+        cert,
+        settings,
+        _verify_url(cert),
+        logo_path=logo,
+        signature_path=upload_abspath(cert.signature),
+        qr_bytes=qr,
+    )
+    response = Response(pdf_bytes, mimetype="application/pdf")
+    filename = f"certificado-{cert.serial or cert.verify_code}.pdf"
+    response.headers["Content-Disposition"] = f'inline; filename="{filename}"'
+    return response
 
 
 @public_bp.route("/<slug>")

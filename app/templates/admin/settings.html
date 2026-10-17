@@ -21,6 +21,11 @@
           {% if s.value %}<div class="upload-preview"><img src="{{ s.value }}" alt=""><a class="upload-remove" href="{{ s.value }}" target="_blank" rel="noopener">Ver</a></div>{% endif %}
           <input class="form-file" type="file" id="s-{{ s.key }}" name="file_{{ s.key }}" accept="image/*">
           <input class="form-control" type="text" name="value_{{ s.key }}" value="{{ s.value or '' }}" placeholder="o ruta manual /uploads/...">
+        {% elif s.field_type == 'video' %}
+          {% if s.value %}<div class="upload-preview"><video src="{{ s.value }}" controls preload="metadata"></video><a class="upload-remove" href="{{ s.value }}" target="_blank" rel="noopener">Ver</a></div>{% endif %}
+          <input class="form-file" type="file" id="s-{{ s.key }}" name="file_{{ s.key }}" accept="video/mp4,video/webm,video/ogg">
+          <input class="form-control" type="text" name="value_{{ s.key }}" value="{{ s.value or '' }}" placeholder="o ruta manual /uploads/...">
+          <small class="field-help">Formatos recomendados: MP4 (H.264). Tamano maximo 64 MB.</small>
         {% else %}
           <input class="form-control" type="text" id="s-{{ s.key }}" name="value_{{ s.key }}" value="{{ s.value or '' }}">
         {% endif %}

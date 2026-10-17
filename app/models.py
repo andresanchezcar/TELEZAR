@@ -10,11 +10,17 @@ from app.extensions import db, login_manager
 class User(UserMixin, db.Model):
     __tablename__ = "users"
 
+    ROLES = {
+        "admin": "Administrador",
+        "superadmin": "Super Admin",
+    }
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True)
     full_name = db.Column(db.String(120))
     password_hash = db.Column(db.String(256), nullable=False)
+    role = db.Column(db.String(20), default="admin", nullable=False)
     is_active_user = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -27,6 +33,14 @@ class User(UserMixin, db.Model):
     @property
     def is_active(self):
         return self.is_active_user
+
+    @property
+    def is_superadmin(self):
+        return self.role == "superadmin"
+
+    @property
+    def role_label(self):
+        return self.ROLES.get(self.role, self.role or "Administrador")
 
 
 @login_manager.user_loader
@@ -154,17 +168,162 @@ class Brand(db.Model):
     published = db.Column(db.Boolean, default=True)
 
 
+class Signature(db.Model):
+    __tablename__ = "signatures"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(160), nullable=False)
+    role = db.Column(db.String(120), default="")
+    image = db.Column(db.String(255), default="")
+    order = db.Column(db.Integer, default=0)
+    published = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Certificate(db.Model):
     __tablename__ = "certificates"
 
+    # tipos soportados: calibracion (los demas se agregan a futuro)
+    TYPES = {
+        "calibracion": "CERTIFICADO DE CALIBRACIÓN",
+        "mecanica": "CERTIFICADO DE AJUSTE Y CALIBRACIÓN MECÁNICA",
+    }
+    # dispositivos que se calibran
+    DEVICE_TYPES = {
+        "opm": "OPM (Medidor de potencia óptica)",
+        "otdr": "OTDR (Reflectómetro óptico)",
+        "mecanica": "Máquina de empalme por fusión (Ajuste y calibración mecánica)",
+    }
+    # forma de emision del documento
+    MODES = {
+        "generar": "Generar en sistema",
+        "anexar": "Anexar documento",
+    }
+
     id = db.Column(db.Integer, primary_key=True)
+    cert_type = db.Column(db.String(30), default="calibracion")
+    device_type = db.Column(db.String(20), default="opm")
+    doc_mode = db.Column(db.String(20), default="generar")
+    code = db.Column(db.String(24), unique=True, index=True)
+    title = db.Column(db.String(160), default="CERTIFICADO DE CALIBRACIÓN")
     serial = db.Column(db.String(80), nullable=False, index=True)
-    client = db.Column(db.String(160), default="")
+
+    # datos del cliente
+    client = db.Column(db.String(160), default="")           # razon social
+    client_doc = db.Column(db.String(60), default="")        # documento / NIT
+    client_email = db.Column(db.String(120), default="")
+    client_address = db.Column(db.String(200), default="")   # direccion
+
+    # datos del equipo a certificar
     equipment = db.Column(db.String(160), default="")
-    issued_date = db.Column(db.Date)
+    equipment_brand = db.Column(db.String(120), default="")
+    equipment_model = db.Column(db.String(120), default="")
+    uncertainty = db.Column(db.String(30), default="")       # incertidumbre (%)
+    std_wavelength = db.Column(db.String(60), default="")    # longitud de onda estandar
+    issued_date = db.Column(db.Date)                         # fecha de calibracion
+    next_date = db.Column(db.Date)                           # proxima calibracion
+
+    # datos del equipo de prueba (patron utilizado)
+    test_equipment = db.Column(db.String(160), default="")
+    test_brand = db.Column(db.String(120), default="")
+    test_model = db.Column(db.String(120), default="")
+    test_serial = db.Column(db.String(80), default="")
+    test_notes = db.Column(db.String(255), default="")
+    test_equipment_data = db.Column(db.Text)  # JSON: lista de equipos de prueba (patron)
+
+    # datos de quien certifica
+    certifier = db.Column(db.String(160), default="")
+    certifier_role = db.Column(db.String(120), default="")
+    signature = db.Column(db.String(255), default="")  # imagen de la firma
+    signature_id = db.Column(db.Integer, db.ForeignKey("signatures.id"))  # firma elegida
+
     file_url = db.Column(db.String(255), default="")
     notes = db.Column(db.String(255), default="")
+    otdr_data = db.Column(db.Text)  # JSON con los datos del certificado OTDR
+    mech_data = db.Column(db.Text)  # JSON con los datos del certificado de ajuste mecanico
     published = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    tests = db.relationship(
+        "CertificateTest",
+        backref="certificate",
+        cascade="all, delete-orphan",
+        order_by="CertificateTest.order",
+        lazy="select",
+    )
+
+    @property
+    def type_label(self):
+        return self.TYPES.get(self.cert_type, "Certificado")
+
+    @property
+    def device_label(self):
+        return self.DEVICE_TYPES.get(self.device_type, self.device_type or "")
+
+    @property
+    def mode_label(self):
+        return self.MODES.get(self.doc_mode, self.doc_mode or "")
+
+    @property
+    def is_attachment_mode(self):
+        return self.doc_mode == "anexar"
+
+    @property
+    def otdr(self):
+        from app.cert_otdr import build_otdr_view
+
+        return build_otdr_view(self.otdr_data)
+
+    @property
+    def mech(self):
+        from app.cert_mech import build_mech_view
+
+        return build_mech_view(self.mech_data)
+
+    @property
+    def test_equipments(self):
+        """Lista de equipos de prueba (patron), con respaldo en el campo simple."""
+        import json
+
+        raw = (self.test_equipment_data or "").strip()
+        if raw:
+            try:
+                data = json.loads(raw)
+            except (ValueError, TypeError):
+                data = None
+            if isinstance(data, list):
+                items = [str(x).strip() for x in data if str(x).strip()]
+                if items:
+                    return items
+        single = (self.test_equipment or "").strip()
+        return [single] if single else []
+
+    @property
+    def verify_code(self):
+        return self.code or str(self.id)
+
+    @property
+    def is_current(self):
+        if not self.published:
+            return False
+        if self.next_date and self.next_date < datetime.utcnow().date():
+            return False
+        return True
+
+
+class CertificateTest(db.Model):
+    __tablename__ = "certificate_tests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    certificate_id = db.Column(
+        db.Integer, db.ForeignKey("certificates.id"), nullable=False, index=True
+    )
+    order = db.Column(db.Integer, default=0)
+    test_no = db.Column(db.String(20), default="")
+    wavelength = db.Column(db.String(30), default="")        # longitud de onda (nm)
+    power = db.Column(db.String(30), default="")             # potencia (dBm)
+    wavelength_value = db.Column(db.String(30), default="")  # valor ±0.020nm
+    approved = db.Column(db.Boolean, default=True)
 
 
 class ContactMessage(db.Model):
@@ -236,3 +395,8 @@ def unique_slug(model, base, exclude_id=None):
 def new_uuid_name(filename):
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "bin"
     return f"{uuid.uuid4().hex}.{ext}"
+
+
+def new_cert_code():
+    """Codigo publico unico para verificacion de un certificado."""
+    return uuid.uuid4().hex[:12].upper()

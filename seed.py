@@ -16,12 +16,14 @@ from app.models import (
     Brand,
     Category,
     Certificate,
+    CertificateTest,
     GalleryImage,
     Page,
     Product,
     Service,
     Setting,
     User,
+    new_cert_code,
     unique_slug,
 )
 
@@ -34,6 +36,8 @@ SETTINGS = [
      "Soluciones integrales en redes, fibra optica y telecomunicaciones"),
     ("site_logo", "Logo", "Identidad", "image", ""),
     ("favicon", "Favicon", "Identidad", "image", ""),
+    ("company_nit", "NIT de la empresa", "Identidad", "text", ""),
+    ("company_legal_rep", "Representante legal", "Identidad", "text", ""),
 
     ("site_url", "Dominio publico (canonical, sitemap, redes)", "SEO", "text",
      "https://telezarcomunicaciones.com"),
@@ -48,6 +52,8 @@ SETTINGS = [
     ("hero_subtitle", "Subtitulo", "Hero (Inicio)", "textarea",
      "Fusionadoras, OTDR, cortadoras, identificadores de trafico, OPM y mas equipos de cualquier tipo y marca. Contamos con el equipo humano y tecnico que su compania necesita."),
     ("hero_image", "Imagen/ilustracion", "Hero (Inicio)", "image", ""),
+
+    ("home_video", "Video de presentacion (inicio)", "Video (Inicio)", "video", ""),
 
     ("about_title", "Titulo seccion Nosotros", "Sobre nosotros", "text",
      "TELEZAR COMUNICACIONES"),
@@ -322,17 +328,52 @@ BRANDS = [
 CERTIFICATES = [
     {
         "serial": "27AM1701",
+        "cert_type": "calibracion",
+        "device_type": "opm",
+        "doc_mode": "generar",
         "client": "Empresa de telecomunicaciones",
+        "client_doc": "900123456-7",
+        "client_email": "cliente@ejemplo.com",
         "equipment": "Fusionadora de fibra optica",
+        "equipment_brand": "Fujikura",
+        "equipment_model": "FSM-80S",
+        "uncertainty": "0.05",
+        "std_wavelength": "1310 / 1550",
         "issued_date": date(2024, 11, 20),
+        "next_date": date(2027, 11, 20),
+        "test_equipment": "Medidor de potencia optica patron EXFO FPM-600 (serie EX12345)",
+        "certifier": "Ing. Andres Sanchez",
+        "certifier_role": "Director tecnico",
         "notes": "Certificacion de calibracion y ajuste de unidad optica.",
+        "tests": [
+            ("1", "1310.00", "-3.25", "1310.01", True),
+            ("2", "1550.00", "-4.10", "1549.99", True),
+            ("3", "1625.00", "-6.30", "1625.02", True),
+        ],
     },
     {
         "serial": "TZC0738",
+        "cert_type": "calibracion",
+        "device_type": "opm",
+        "doc_mode": "generar",
         "client": "Contratista de redes",
-        "equipment": "OTDR",
+        "client_doc": "10203040",
+        "client_email": "contacto@ejemplo.com",
+        "equipment": "Medidor de potencia optica",
+        "equipment_brand": "JDSU",
+        "equipment_model": "OLP-35",
+        "uncertainty": "0.05",
+        "std_wavelength": "1310 / 1550",
         "issued_date": date(2024, 10, 2),
+        "next_date": date(2027, 10, 2),
+        "test_equipment": "Fuente laser patron JDSU OLS-35 (serie JD9988)",
+        "certifier": "Ing. Andres Sanchez",
+        "certifier_role": "Director tecnico",
         "notes": "Verificacion de calibracion de reflectometro OTDR.",
+        "tests": [
+            ("1", "1310.00", "-2.80", "1310.00", True),
+            ("2", "1550.00", "-3.40", "1550.01", True),
+        ],
     },
 ]
 
@@ -357,7 +398,7 @@ def seed():
             username = os.environ.get("ADMIN_USERNAME", "admin")
             password = os.environ.get("ADMIN_PASSWORD", "admin123")
             email = os.environ.get("ADMIN_EMAIL", "admin@telezarcomunicaciones.com")
-            admin = User(username=username, email=email)
+            admin = User(username=username, email=email, role="superadmin")
             admin.set_password(password)
             admin.full_name = "Administrador Telezar"
             db.session.add(admin)
@@ -366,12 +407,17 @@ def seed():
             print("* Usuarios ya existentes.")
 
         # --- Ajustes ----------------------------------------------------
-        if Setting.query.count() == 0:
-            for key, label, section, ftype, value in SETTINGS:
-                db.session.add(Setting(
-                    key=key, label=label, section=section, field_type=ftype, value=value,
-                ))
-            print(f"* {len(SETTINGS)} ajustes creados.")
+        existing_keys = {s.key for s in Setting.query.all()}
+        added = 0
+        for key, label, section, ftype, value in SETTINGS:
+            if key in existing_keys:
+                continue
+            db.session.add(Setting(
+                key=key, label=label, section=section, field_type=ftype, value=value,
+            ))
+            added += 1
+        if added:
+            print(f"* {added} ajustes nuevos agregados.")
         else:
             print("* Ajustes ya existentes.")
 
@@ -442,10 +488,28 @@ def seed():
         # --- Certificados -------------------------------------------------
         if Certificate.query.count() == 0:
             for c in CERTIFICATES:
-                db.session.add(Certificate(**c))
+                data = {k: v for k, v in c.items() if k != "tests"}
+                cert = Certificate(code=new_cert_code(), **data)
+                db.session.add(cert)
+                db.session.flush()
+                for i, row in enumerate(c.get("tests", [])):
+                    no, wl, pw, val, ok = row
+                    db.session.add(CertificateTest(
+                        certificate_id=cert.id, order=i, test_no=no,
+                        wavelength=wl, power=pw, wavelength_value=val, approved=ok,
+                    ))
             print(f"* {len(CERTIFICATES)} certificados de ejemplo creados.")
         else:
             print("* Certificados ya existentes.")
+
+        # Asegura que todos los certificados tengan codigo de verificacion.
+        missing = Certificate.query.filter(
+            (Certificate.code == None) | (Certificate.code == "")  # noqa: E711
+        ).all()
+        for cert in missing:
+            cert.code = new_cert_code()
+        if missing:
+            print(f"* {len(missing)} certificados recibieron codigo de verificacion.")
 
         # --- Galeria ------------------------------------------------------
         if GalleryImage.query.count() == 0:

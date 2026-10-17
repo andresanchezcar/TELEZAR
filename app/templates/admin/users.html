@@ -1,0 +1,66 @@
+{% extends "admin/base.html" %}
+{% block title %}Usuarios{% endblock %}
+{% block admin_title %}Usuarios{% endblock %}
+
+{% block admin_content %}
+<div class="toolbar">
+  <div class="toolbar-actions">
+    <a class="btn btn-primary" href="{{ url_for('admin.user_create') }}">+ Nuevo usuario</a>
+  </div>
+</div>
+
+{% if items %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Correo</th>
+        <th>Rol</th>
+        <th>Estado</th>
+        <th class="td-actions">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in items %}
+      <tr>
+        <td>
+          <strong>{{ u.username }}</strong>
+          {% if u.full_name %}<br><small>{{ u.full_name }}</small>{% endif %}
+        </td>
+        <td>{{ u.email or '—' }}</td>
+        <td><span class="pill">{{ u.role_label }}</span></td>
+        <td>
+          {% if u.is_active_user %}<span class="pill pill-ok">Activo</span>
+          {% else %}<span class="pill">Inactivo</span>{% endif %}
+        </td>
+        <td class="td-actions">
+          <details class="row-details">
+            <summary class="btn btn-outline btn-xs">Contrasena</summary>
+            <form class="row-details-form" method="post" action="{{ url_for('admin.user_password', item_id=u.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input class="form-control" type="password" name="new_password" placeholder="Nueva contrasena" autocomplete="new-password" minlength="8" required>
+              <input class="form-control" type="password" name="confirm_password" placeholder="Confirmar" autocomplete="new-password" minlength="8" required>
+              <button class="btn btn-primary btn-xs" type="submit">Restablecer</button>
+            </form>
+          </details>
+          <form class="inline-form" method="post" action="{{ url_for('admin.user_toggle', item_id=u.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline btn-xs" type="submit">{{ 'Desactivar' if u.is_active_user else 'Activar' }}</button>
+          </form>
+          <form class="inline-form" method="post" action="{{ url_for('admin.user_delete', item_id=u.id) }}"
+                data-confirm="¿Eliminar este usuario?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-danger btn-xs" type="submit">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="muted">Los usuarios con rol Super Admin no se muestran en esta lista.</p>
+{% else %}
+<p class="empty-state">Aun no hay usuarios. Crea el primero con «+ Nuevo usuario».</p>
+{% endif %}
+{% endblock %}

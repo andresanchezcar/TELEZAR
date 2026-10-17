@@ -6,8 +6,8 @@
   <title>{% block title %}Administracion{% endblock %} — Telezar</title>
   <link rel="icon" href="{{ settings.get('favicon', '/static/img/logo.png') }}">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v=asset_v) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css', v=asset_v) }}">
 </head>
 <body class="admin-body">
   <div class="admin-layout">
@@ -28,9 +28,11 @@
         </a>
 
         <p class="sidebar-label">Contenido</p>
+        {% if current_user.is_superadmin %}
         <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'paginas' }}" href="{{ url_for('admin.entity_list', entity_key='paginas') }}">
           <svg class="icon"><use href="/static/img/icons.svg#file"></use></svg> Paginas
         </a>
+        {% endif %}
         <a class="side-link {{ 'active' if request.view_args and request.view_args.get('entity_key') == 'servicios' }}" href="{{ url_for('admin.entity_list', entity_key='servicios') }}">
           <svg class="icon"><use href="/static/img/icons.svg#tools"></use></svg> Servicios
         </a>
@@ -54,12 +56,17 @@
         </a>
 
         <p class="sidebar-label">Sistema</p>
+        {% if current_user.is_superadmin %}
         <a class="side-link {{ 'active' if request.endpoint == 'admin.settings' }}" href="{{ url_for('admin.settings') }}">
           <svg class="icon"><use href="/static/img/icons.svg#gear"></use></svg> Ajustes
         </a>
         <a class="side-link {{ 'active' if request.endpoint == 'admin.textos' }}" href="{{ url_for('admin.textos') }}">
           <svg class="icon"><use href="/static/img/icons.svg#editable"></use></svg> Textos
         </a>
+        <a class="side-link {{ 'active' if request.endpoint in ['admin.users', 'admin.user_create'] }}" href="{{ url_for('admin.users') }}">
+          <svg class="icon"><use href="/static/img/icons.svg#user"></use></svg> Usuarios
+        </a>
+        {% endif %}
         <a class="side-link {{ 'active' if request.endpoint == 'admin.profile' }}" href="{{ url_for('admin.profile') }}">
           <svg class="icon"><use href="/static/img/icons.svg#user"></use></svg> Mi perfil
         </a>
@@ -108,6 +115,6 @@
   </div>
 
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
-  <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/admin.js', v=asset_v) }}"></script>
 </body>
 </html>

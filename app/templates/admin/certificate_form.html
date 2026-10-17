@@ -1,0 +1,390 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Nuevo' if creating else 'Editar' }} {{ entity.singular }}{% endblock %}
+{% block admin_title %}{{ 'Nuevo' if creating else 'Editar' }} {{ entity.singular }}{% endblock %}
+
+{% block admin_content %}
+<form class="panel form-panel cert-form" method="post" enctype="multipart/form-data" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="otdr_data" id="otdr_data" value="{{ obj.otdr_data or '' }}">
+  <input type="hidden" name="mech_data" id="mech_data" value="{{ obj.mech_data or '' }}">
+
+  <section class="form-section">
+    <h2 class="form-section-title">Tipo de certificado</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="f-cert_type">Tipo de certificado</label>
+        <select class="form-control" id="f-cert_type" name="cert_type">
+          {% for value, label in obj.TYPES.items() %}
+          <option value="{{ value }}" {% if (obj.cert_type or 'calibracion') == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="f-device_type">Dispositivo a certificar</label>
+        <select class="form-control" id="f-device_type" name="device_type">
+          {% for value, label in obj.DEVICE_TYPES.items() %}
+          <option value="{{ value }}" {% if (obj.device_type or 'opm') == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="f-doc_mode">Forma de emisión</label>
+        <select class="form-control" id="f-doc_mode" name="doc_mode">
+          {% for value, label in obj.MODES.items() %}
+          <option value="{{ value }}" {% if (obj.doc_mode or 'generar') == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    {% if obj.code %}
+    <p class="field-help">Código de verificación: <strong>{{ obj.code }}</strong></p>
+    {% endif %}
+    <p class="field-help">El título del documento se asigna automáticamente según el tipo seleccionado.</p>
+  </section>
+
+  <section class="form-section" data-show-if='{"doc_mode": "generar"}'>
+    <h2 class="form-section-title">Datos del cliente</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="f-client">Razón social</label>
+        <input class="form-control" type="text" id="f-client" name="client" value="{{ obj.client or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="f-client_doc">Documento y/o NIT</label>
+        <input class="form-control" type="text" id="f-client_doc" name="client_doc" value="{{ obj.client_doc or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="f-client_email">Correo electrónico</label>
+        <input class="form-control" type="email" id="f-client_email" name="client_email" value="{{ obj.client_email or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="f-client_address">Dirección</label>
+        <input class="form-control" type="text" id="f-client_address" name="client_address" value="{{ obj.client_address or '' }}">
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section" data-show-if='{"doc_mode": "generar"}'>
+    <h2 class="form-section-title">Datos del equipo a certificar</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="f-equipment">Equipo</label>
+        <input class="form-control" type="text" id="f-equipment" name="equipment" value="{{ obj.equipment or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="f-equipment_brand">Marca</label>
+        <input class="form-control" type="text" id="f-equipment_brand" name="equipment_brand" value="{{ obj.equipment_brand or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="f-equipment_model">Modelo</label>
+        <input class="form-control" type="text" id="f-equipment_model" name="equipment_model" value="{{ obj.equipment_model or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="f-serial">Número de serie *</label>
+        <input class="form-control" type="text" id="f-serial" name="serial" value="{{ obj.serial or '' }}" required>
+      </div>
+      <div class="form-group" data-show-if='{"device_type": "opm"}'>
+        <label for="f-uncertainty">Incertidumbre (%)</label>
+        <input class="form-control" type="text" id="f-uncertainty" name="uncertainty" value="{{ obj.uncertainty or '' }}">
+      </div>
+      <div class="form-group" data-show-if='{"device_type": "opm"}'>
+        <label for="f-std_wavelength">Longitud de onda estándar</label>
+        <input class="form-control" type="text" id="f-std_wavelength" name="std_wavelength" value="{{ obj.std_wavelength or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="f-issued_date">Fecha de calibración</label>
+        <input class="form-control" type="date" id="f-issued_date" name="issued_date" value="{{ obj.issued_date.isoformat() if obj.issued_date else '' }}">
+      </div>
+      <div class="form-group">
+        <label for="f-next_date">Próxima calibración</label>
+        <input class="form-control" type="date" id="f-next_date" name="next_date" value="{{ obj.next_date.isoformat() if obj.next_date else '' }}">
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section" data-otdr data-show-if='{"device_type": "otdr", "doc_mode": "generar"}'>
+    <h2 class="form-section-title">Condiciones de la calibración</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="otdr_temp">Temperatura ambiente media (°C)</label>
+        <div class="input-pair">
+          <input class="form-control" type="text" id="otdr_temp" data-env="temp" placeholder="16">
+          <span class="input-pair-sep">±</span>
+          <input class="form-control" type="text" id="otdr_temp_tol" data-env="temp_tol" placeholder="2">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="otdr_humidity">Humedad relativa (%)</label>
+        <div class="input-pair">
+          <input class="form-control" type="text" id="otdr_humidity" data-env="humidity" placeholder="50">
+          <span class="input-pair-sep">±</span>
+          <input class="form-control" type="text" id="otdr_humidity_tol" data-env="humidity_tol" placeholder="10">
+        </div>
+      </div>
+    </div>
+
+    <div class="otdr-block">
+      <div class="panel-head">
+        <h3 class="otdr-block-title">Calibración distancia</h3>
+        <button class="btn btn-outline btn-sm" type="button" data-otdr-add="distance">+ Agregar calibración</button>
+      </div>
+      <div data-otdr-groups="distance"></div>
+    </div>
+
+    <div class="otdr-block">
+      <div class="panel-head">
+        <h3 class="otdr-block-title">Calibración atenuaciones</h3>
+        <button class="btn btn-outline btn-sm" type="button" data-otdr-add="attenuation">+ Agregar calibración</button>
+      </div>
+      <div data-otdr-groups="attenuation"></div>
+    </div>
+
+    <div class="otdr-block">
+      <div class="panel-head">
+        <h3 class="otdr-block-title">Patrones utilizados</h3>
+        <button class="btn btn-outline btn-sm" type="button" data-otdr-add="patterns">+ Agregar patrón</button>
+      </div>
+      <div data-otdr-list="patterns" class="otdr-simple-list"></div>
+    </div>
+
+    <div class="otdr-block">
+      <div class="panel-head">
+        <h3 class="otdr-block-title">Métodos utilizados</h3>
+        <button class="btn btn-outline btn-sm" type="button" data-otdr-add="methods">+ Agregar método</button>
+      </div>
+      <div data-otdr-list="methods" class="otdr-simple-list"></div>
+    </div>
+  </section>
+
+  <section class="form-section" data-show-if='{"doc_mode": "generar", "device_type": "opm"}'>
+    <div class="panel-head">
+      <h2 class="form-section-title">Estudio de calibración</h2>
+      <button class="btn btn-outline btn-sm" type="button" data-add-test>+ Agregar prueba</button>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table rows-table">
+        <thead>
+          <tr>
+            <th>Prueba No.</th>
+            <th>Longitud de onda (nm)</th>
+            <th>Potencia (dBm)</th>
+            <th>Valor ±0.020 nm</th>
+            <th>Aprobado</th>
+            <th class="td-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="test-rows">
+          {% for test in obj.tests %}
+          <tr>
+            <td><input class="form-control" type="text" name="tests-{{ loop.index0 }}-no" value="{{ test.test_no or loop.index }}" readonly></td>
+            <td><input class="form-control" type="text" name="tests-{{ loop.index0 }}-wavelength" value="{{ test.wavelength or '' }}"></td>
+            <td><input class="form-control" type="text" name="tests-{{ loop.index0 }}-power" value="{{ test.power or '' }}"></td>
+            <td><input class="form-control" type="text" name="tests-{{ loop.index0 }}-wavelength_value" value="{{ test.wavelength_value or '' }}"></td>
+            <td>
+              <select class="form-control" name="tests-{{ loop.index0 }}-approved">
+                <option value="1" {% if test.approved %}selected{% endif %}>Sí</option>
+                <option value="0" {% if not test.approved %}selected{% endif %}>No</option>
+              </select>
+            </td>
+            <td class="td-actions">
+              <button class="btn btn-danger btn-xs" type="button" data-remove-test>&times;</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="field-help">El número de prueba se asigna automáticamente (1, 2, 3…). Puede agregar tantas pruebas como necesite.</p>
+  </section>
+
+  <section class="form-section" data-show-if='{"doc_mode": "generar", "device_type": "opm"}'>
+    <h2 class="form-section-title">Datos del equipo de prueba (patrón)</h2>
+    <div class="repeat-list" data-repeat-list>
+      <div class="repeat-rows" data-repeat-rows>
+        {% for eq in obj.test_equipments %}
+        <div class="repeat-row">
+          <input class="form-control" type="text" data-repeat-item value="{{ eq }}" placeholder="Ej: Promax OD-405 (serie TZC0738)">
+          <button class="btn btn-danger btn-xs" type="button" data-repeat-remove>&times;</button>
+        </div>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="test_equipment_data" data-repeat-hidden value="{{ obj.test_equipment_data or '' }}">
+      <button class="btn btn-outline btn-sm" type="button" data-repeat-add>+ Agregar equipo</button>
+    </div>
+    <p class="field-help">Puede agregar varios equipos patrón. </p>
+  </section>
+
+  <section class="form-section" data-mech data-patrones='{{ patrones_json }}' data-show-if='{"doc_mode": "generar", "device_type": "mecanica"}'>
+    <h2 class="form-section-title">Texto de certificación</h2>
+    {% set mech = obj.mech %}
+    <textarea class="form-control" id="f-mech_legal" data-mech-legal rows="3" placeholder="Texto de certificación">{{ mech.legal }}</textarea>
+    <p class="field-help">Este texto aparece debajo del título del certificado. Puede editarlo.</p>
+  </section>
+
+  <section class="form-section" data-show-if='{"doc_mode": "generar", "device_type": "mecanica"}'>
+    <h2 class="form-section-title">Acciones realizadas</h2>
+    <div class="repeat-list" data-mech-actions>
+      <div class="repeat-rows" data-mech-action-rows>
+        {% for action in mech.actions %}
+        <div class="repeat-row">
+          <input class="form-control" type="text" data-mech-action value="{{ action }}">
+          <button class="btn btn-danger btn-xs" type="button" data-mech-action-remove>&times;</button>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-outline btn-sm" type="button" data-mech-action-add>+ Agregar acción</button>
+    </div>
+    <p class="field-help">Puede quitar las acciones que no apliquen o agregar nuevas.</p>
+  </section>
+
+  <section class="form-section" data-show-if='{"doc_mode": "generar", "device_type": "mecanica"}'>
+    <div class="panel-head">
+      <h2 class="form-section-title">Patrones utilizados</h2>
+      <button class="btn btn-outline btn-sm" type="button" data-mech-patron-add>+ Agregar patrón</button>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table rows-table">
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th>Fabricante</th>
+            <th>Modelo</th>
+            <th>N° de serie</th>
+            <th>N° certificado</th>
+            <th>Vence</th>
+            <th class="td-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="mech-patron-rows">
+          {% for row in mech.patrones %}
+          <tr>
+            <td><input class="form-control" type="text" data-mp="descripcion" value="{{ row.descripcion }}"></td>
+            <td><input class="form-control" type="text" data-mp="fabricante" value="{{ row.fabricante }}"></td>
+            <td><input class="form-control" type="text" data-mp="modelo" value="{{ row.modelo }}"></td>
+            <td><input class="form-control" type="text" data-mp="serie" value="{{ row.serie }}"></td>
+            <td><input class="form-control" type="text" data-mp="certificado" value="{{ row.certificado }}"></td>
+            <td><input class="form-control" type="text" data-mp="vence" value="{{ row.vence }}"></td>
+            <td class="td-actions"><button class="btn btn-danger btn-xs" type="button" data-mech-patron-remove>&times;</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="field-help">Escriba el N° de serie de un equipo ya certificado (por ejemplo un OTDR) y se completarán Descripción, Fabricante, Modelo, N° de certificado y Vence.</p>
+  </section>
+
+  <section class="form-section" data-show-if='{"doc_mode": "generar", "device_type": "mecanica"}'>
+    <h2 class="form-section-title">Condiciones ambientales de ajuste y calibración</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="mech_temp">Temperatura ambiente media (°C)</label>
+        <div class="input-pair">
+          <input class="form-control" type="text" id="mech_temp" data-mc-env="temp" value="{{ mech.environment.temp }}" placeholder="16">
+          <span class="input-pair-sep">±</span>
+          <input class="form-control" type="text" id="mech_temp_tol" data-mc-env="temp_tol" value="{{ mech.environment.temp_tol }}" placeholder="2">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="mech_humidity">Humedad relativa (%)</label>
+        <div class="input-pair">
+          <input class="form-control" type="text" id="mech_humidity" data-mc-env="humidity" value="{{ mech.environment.humidity }}" placeholder="50">
+          <span class="input-pair-sep">±</span>
+          <input class="form-control" type="text" id="mech_humidity_tol" data-mc-env="humidity_tol" value="{{ mech.environment.humidity_tol }}" placeholder="10">
+        </div>
+      </div>
+    </div>
+    <p class="field-help">Se muestran en el certificado como «Temperatura ambiente media» y «Humedad relativa».</p>
+  </section>
+
+  <section class="form-section" data-show-if='{"doc_mode": "generar"}'>
+    <h2 class="form-section-title">Datos de quien certifica</h2>
+    <div class="form-grid">
+      <div class="form-group form-grid-full">
+        <label for="f-signature_id">Firma (quién certifica)</label>
+        <select class="form-control" id="f-signature_id" name="signature_id"
+                data-signature-select data-certifier="f-certifier" data-role="f-certifier_role">
+          <option value="">— Seleccione una firma —</option>
+          {% for s in signatures %}
+          <option value="{{ s.id }}" data-name="{{ s.name }}" data-role-text="{{ s.role or '' }}" data-image="{{ s.image or '' }}"
+                  {% if obj.signature_id == s.id %}selected{% endif %}>{{ s.name }}{% if s.role %} — {{ s.role }}{% endif %}</option>
+          {% endfor %}
+        </select>
+        <div class="firma-preview" data-firma-preview hidden>
+          <img data-firma-preview-img alt="Firma seleccionada">
+        </div>
+        <small class="field-help">Administre las firmas en <a href="{{ url_for('admin.entity_list', entity_key='certificados') }}">Certificados → Firmas</a>. Al elegir una firma se completan el nombre, el cargo y la imagen.</small>
+      </div>
+      <div class="form-group">
+        <label for="f-certifier">Nombre del funcionario</label>
+        <input class="form-control" type="text" id="f-certifier" name="certifier" value="{{ obj.certifier or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="f-certifier_role">Cargo</label>
+        <input class="form-control" type="text" id="f-certifier_role" name="certifier_role" value="{{ obj.certifier_role or '' }}">
+      </div>
+      <div class="form-group form-grid-full">
+        <label for="f-signature">Imagen de la firma (opcional)</label>
+        {% if obj.signature %}
+        <div class="upload-preview upload-preview-sign"><img src="{{ obj.signature }}" alt="Firma actual"></div>
+        {% endif %}
+        <input class="form-file" type="file" id="f-signature" name="signature" accept="image/*">
+        <small class="field-help">PNG, JPG, WEBP o GIF. Se muestra sobre el nombre en el PDF y en la vista del certificado.</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section" data-show-if='{"doc_mode": "anexar"}'>
+    <h2 class="form-section-title">Código QR para su documento</h2>
+    {% if obj.id %}
+    <p class="field-help">Descargue el código QR e insértelo en su PDF antes de subirlo. Así el documento quedará verificable en línea.</p>
+    <p class="field-help">Página de verificación: <a href="{{ url_for('public.certificate_detail', code=obj.verify_code) }}" target="_blank" rel="noopener">{{ url_for('public.certificate_detail', code=obj.verify_code) }}</a></p>
+    <a class="btn btn-outline btn-sm" href="{{ url_for('admin.certificate_qr', item_id=obj.id) }}">Descargar QR</a>
+    {% else %}
+    <p class="field-help">Guarde el certificado para generar y descargar el código QR que debe insertar en su PDF.</p>
+    {% endif %}
+  </section>
+
+  <section class="form-section">
+    <h2 class="form-section-title">Archivo y publicación</h2>
+    <div class="form-group" data-show-if='{"doc_mode": "anexar"}'>
+      <label for="f-file_url">Certificado en PDF (para «Anexar documento»)</label>
+      {% if obj.file_url %}
+      <div class="upload-preview"><a class="upload-remove" href="{{ obj.file_url }}" target="_blank" rel="noopener">Ver archivo actual</a></div>
+      {% endif %}
+      <input class="form-file" type="file" id="f-file_url" name="file_url" accept=".pdf,image/*">
+      <small class="field-help">Formatos permitidos: PDF, PNG, JPG, WEBP, GIF. Máx. 8 MB. Este archivo se mostrará al público cuando la forma de emisión sea «Anexar documento».</small>
+    </div>
+    <div class="form-group">
+      <label for="f-notes">Notas</label>
+      <input class="form-control" type="text" id="f-notes" name="notes" value="{{ obj.notes or '' }}">
+    </div>
+    <div class="form-check">
+      <input type="checkbox" id="f-published" name="published" {% if obj.published %}checked{% endif %}>
+      <label for="f-published">Publicado (válido para verificación)</label>
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Guardar {{ entity.singular }}</button>
+    <a class="btn btn-outline" href="{{ url_for('admin.entity_list', entity_key=entity.key) }}">Cancelar</a>
+  </div>
+</form>
+
+<template id="test-row-template">
+  <tr>
+    <td><input class="form-control" type="text" name="tests-__INDEX__-no" value="" readonly></td>
+    <td><input class="form-control" type="text" name="tests-__INDEX__-wavelength"></td>
+    <td><input class="form-control" type="text" name="tests-__INDEX__-power"></td>
+    <td><input class="form-control" type="text" name="tests-__INDEX__-wavelength_value"></td>
+    <td>
+      <select class="form-control" name="tests-__INDEX__-approved">
+        <option value="1" selected>Sí</option>
+        <option value="0">No</option>
+      </select>
+    </td>
+    <td class="td-actions">
+      <button class="btn btn-danger btn-xs" type="button" data-remove-test>&times;</button>
+    </td>
+  </tr>
+</template>
+{% endblock %}

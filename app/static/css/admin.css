@@ -114,7 +114,7 @@
 }
 .admin-user-name { font-weight: 700; font-size: 14.5px; color: var(--text); }
 
-.admin-content { padding: 26px; max-width: 1100px; width: 100%; }
+.admin-content { padding: 26px; width: 100%; }
 
 /* ----------------------------- Flash ----------------------------- */
 .flash-stack { display: grid; gap: 10px; margin-bottom: 20px; }
@@ -175,11 +175,13 @@
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
 .panel-head h2 { font-size: 18px; color: var(--primary); }
 
-.form-panel { max-width: 760px; }
+.form-panel { max-width: none; }
 .form-block.is-hidden { display: none !important; }
+.is-hidden { display: none !important; }
 
 /* ----------------------------- Toolbar ----------------------------- */
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+.toolbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .toolbar-search { display: flex; gap: 8px; max-width: 340px; width: 100%; }
 .toolbar-search .form-control { width: auto; }
 
@@ -282,3 +284,99 @@
 .login-card .btn { margin-top: 6px; }
 .login-back { display: block; text-align: center; margin-top: 20px; font-size: 14px; font-weight: 700; color: var(--muted); }
 .login-back:hover { color: var(--accent-dark); }
+
+/* ----------------------------- Formulario de certificados ----------------------------- */
+.cert-form { max-width: none; }
+.cert-form .form-section { padding-top: 8px; margin-bottom: 8px; }
+.cert-form .form-section + .form-section { border-top: 1px solid var(--border); margin-top: 22px; }
+.cert-form .form-section-title { border-top: 0; padding-top: 0; margin-top: 22px; }
+.cert-form .panel-head { margin-bottom: 14px; }
+.cert-form .panel-head .form-section-title { margin: 0; }
+.cert-form .upload-preview-sign img { width: auto; height: auto; max-width: 300px; max-height: 130px; object-fit: contain; background: #fff; }
+
+.form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 18px; }
+.form-grid-full { grid-column: 1 / -1; }
+@media (max-width: 760px) { .form-grid { grid-template-columns: 1fr; } }
+@media (min-width: 1500px) { .form-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.rows-table { width: 100%; }
+.rows-table th { white-space: nowrap; }
+.rows-table td { padding: 8px; }
+.rows-table .form-control { width: 100%; min-width: 90px; }
+.rows-table .td-actions { width: 44px; }
+
+/* ----------------------------- Formulario OTDR ----------------------------- */
+.input-pair { display: flex; align-items: center; gap: 8px; }
+.input-pair .form-control { flex: 1; }
+.input-pair-sep { color: var(--muted); font-weight: 700; }
+
+.otdr-block { margin-top: 24px; }
+.otdr-block-title { font-size: 16px; color: var(--primary); margin: 0; }
+.otdr-block .panel-head { margin-bottom: 12px; }
+
+.otdr-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+  background: var(--bg-soft);
+}
+.otdr-group-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
+.otdr-group-head .form-group { margin: 0; max-width: 220px; }
+.otdr-table { width: 100%; }
+.otdr-table th { white-space: nowrap; }
+.otdr-table .form-control { width: 100%; min-width: 62px; }
+.otdr-table .otdr-auto { width: 56px; min-width: 0; text-align: center; background: var(--bg-soft); color: var(--muted); font-weight: 700; }
+.otdr-calc { text-align: center; font-weight: 700; color: var(--accent-dark); white-space: nowrap; }
+
+.otdr-simple-list { display: flex; flex-direction: column; gap: 8px; }
+.otdr-simple-row { display: flex; align-items: center; gap: 10px; }
+.otdr-simple-row .form-control { flex: 1; }
+
+.repeat-list { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.repeat-rows { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.repeat-row { display: flex; align-items: center; gap: 10px; }
+.repeat-row .form-control { flex: 1; }
+
+.firmas-panel { margin-bottom: 24px; }
+.firmas-panel .form-section-title { margin: 0; }
+.firma-form { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 18px; }
+.firmas-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.firma-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface, #fff);
+}
+.firma-preview-wrap {
+  flex: 0 0 auto; width: 96px; height: 60px; display: flex; align-items: center;
+  justify-content: center; border: 1px solid var(--border); border-radius: 8px;
+  background: #fff; overflow: hidden;
+}
+.firma-preview-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.firma-noimg { font-size: 11.5px; color: var(--muted); }
+.firma-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.firma-info strong { font-size: 14px; }
+.firma-info span { font-size: 12.5px; }
+.firma-preview { margin-top: 8px; }
+.firma-preview img { max-width: 260px; max-height: 90px; object-fit: contain; background: #fff; }
+.input-pair .field-help { margin-top: 0; }
+
+/* ----------------------------- Usuarios: restablecer contrasena ----------------------------- */
+.row-details { position: relative; display: inline-block; vertical-align: middle; }
+.row-details > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; }
+.row-details > summary::-webkit-details-marker { display: none; }
+.row-details-form {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 18px 42px rgba(12, 28, 70, 0.18);
+}
+.row-details-form .btn { margin: 0; }

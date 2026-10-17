@@ -23,8 +23,11 @@
 
 {% block admin_content %}
 <div class="toolbar">
-  <div>
+  <div class="toolbar-actions">
     <a class="btn btn-primary" href="{{ url_for('admin.entity_create', entity_key=entity.key) }}">+ Nuevo {{ entity.singular }}</a>
+    {% if entity.key == 'certificados' %}
+    <button class="btn btn-outline" type="button" data-firmas-toggle aria-expanded="false" aria-controls="firmas-panel">Firmas ({{ signatures | length }})</button>
+    {% endif %}
     {% if q %}<a class="btn btn-outline" href="{{ url_for('admin.entity_list', entity_key=entity.key) }}">Limpiar busqueda</a>{% endif %}
   </div>
   <form class="toolbar-search" method="get" action="{{ url_for('admin.entity_list', entity_key=entity.key) }}">
@@ -32,6 +35,67 @@
     <button class="btn btn-outline btn-sm" type="submit">Buscar</button>
   </form>
 </div>
+
+{% if entity.key == 'certificados' %}
+<section class="panel firmas-panel" id="firmas-panel" data-firmas-panel hidden>
+  <div class="panel-head">
+    <h2 class="form-section-title">Firmas</h2>
+    <span class="muted">Personas que pueden firmar los certificados.</span>
+    <button class="btn btn-outline btn-sm" type="button" data-firmas-close>Cerrar</button>
+  </div>
+  <form class="firma-form" method="post" action="{{ url_for('admin.signature_create') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="sig-name">Nombre</label>
+        <input class="form-control" type="text" id="sig-name" name="name" required>
+      </div>
+      <div class="form-group">
+        <label for="sig-role">Cargo</label>
+        <input class="form-control" type="text" id="sig-role" name="role" placeholder="Ej: Director técnico">
+      </div>
+      <div class="form-group">
+        <label for="sig-order">Orden</label>
+        <input class="form-control" type="number" id="sig-order" name="order" value="0">
+      </div>
+      <div class="form-group">
+        <label for="sig-image">Imagen de la firma</label>
+        <input class="form-file" type="file" id="sig-image" name="image" accept="image/*">
+      </div>
+      <div class="form-group form-check">
+        <label><input type="checkbox" name="published" value="1" checked> Publicada</label>
+      </div>
+      <div class="form-group form-grid-full">
+        <button class="btn btn-primary" type="submit">+ Agregar firma</button>
+      </div>
+    </div>
+  </form>
+
+  {% if signatures %}
+  <div class="firmas-list">
+    {% for s in signatures %}
+    <div class="firma-item">
+      <div class="firma-preview-wrap">
+        {% if s.image %}<img src="{{ s.image }}" alt="{{ s.name }}">{% else %}<span class="firma-noimg">Sin imagen</span>{% endif %}
+      </div>
+      <div class="firma-info">
+        <strong>{{ s.name }}</strong>
+        {% if s.role %}<span class="muted">{{ s.role }}</span>{% endif %}
+        {% if not s.published %}<span class="pill">Oculta</span>{% endif %}
+      </div>
+      <form class="inline-form" method="post" action="{{ url_for('admin.signature_delete', item_id=s.id) }}"
+            data-confirm="¿Eliminar esta firma?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger btn-xs" type="submit">Eliminar</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty-state">Aún no hay firmas registradas.</p>
+  {% endif %}
+</section>
+{% endif %}
 
 {% if items %}
 <div class="table-wrap">
@@ -47,6 +111,12 @@
       <tr>
         {% for col in entity.columns %}<td>{{ cell(item, col) }}</td>{% endfor %}
         <td class="td-actions">
+          {% if entity.key == 'certificados' %}
+          <a class="btn btn-outline btn-xs" href="{{ url_for('public.certificate_detail', code=item.verify_code) }}" target="_blank" rel="noopener">Ver</a>
+          <a class="btn btn-outline btn-xs" href="{{ url_for('public.certificate_pdf', code=item.verify_code) }}" target="_blank" rel="noopener">PDF</a>
+          <a class="btn btn-outline btn-xs" href="{{ url_for('admin.certificate_qr', item_id=item.id) }}">QR</a>
+          <a class="btn btn-outline btn-xs" href="{{ url_for('admin.certificate_ticket', item_id=item.id) }}" target="_blank" rel="noopener">Ticket</a>
+          {% endif %}
           <a class="btn btn-outline btn-xs" href="{{ url_for('admin.entity_edit', entity_key=entity.key, item_id=item.id) }}">Editar</a>
           <form class="inline-form" method="post" action="{{ url_for('admin.entity_delete', entity_key=entity.key, item_id=item.id) }}"
                 data-confirm="¿Eliminar este {{ entity.singular }}?">

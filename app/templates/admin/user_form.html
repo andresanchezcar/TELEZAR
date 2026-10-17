@@ -1,0 +1,54 @@
+{% extends "admin/base.html" %}
+{% block title %}Nuevo usuario{% endblock %}
+{% block admin_title %}Nuevo usuario{% endblock %}
+
+{% block admin_content %}
+<form class="panel form-panel" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="username">Nombre de usuario</label>
+      <input class="form-control" type="text" id="username" name="username" value="{{ form.get('username', '') }}" autocomplete="off" required>
+      <small class="field-help">Para iniciar sesion. Sin espacios.</small>
+    </div>
+    <div class="form-group">
+      <label for="full_name">Nombre completo</label>
+      <input class="form-control" type="text" id="full_name" name="full_name" value="{{ form.get('full_name', '') }}">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="email">Correo electronico</label>
+      <input class="form-control" type="email" id="email" name="email" value="{{ form.get('email', '') }}">
+    </div>
+    <div class="form-group">
+      <label for="role">Rol</label>
+      <select class="form-control" id="role" name="role">
+        {% for value, label in roles.items() %}
+        <option value="{{ value }}" {{ 'selected' if form.get('role', 'admin') == value }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <small class="field-help">Administrador: no ve Ajustes, Textos ni Paginas. Super Admin: ve todo.</small>
+    </div>
+  </div>
+
+  <h3 class="form-section-title">Contrasena</h3>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="password">Contrasena</label>
+      <input class="form-control" type="password" id="password" name="password" autocomplete="new-password" minlength="8" required>
+    </div>
+    <div class="form-group">
+      <label for="confirm_password">Confirmar contrasena</label>
+      <input class="form-control" type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" minlength="8" required>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Crear usuario</button>
+    <a class="btn btn-outline" href="{{ url_for('admin.users') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

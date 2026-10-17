@@ -1,9 +1,11 @@
 import datetime
+import re
 from dataclasses import dataclass, field as dc_field
 from typing import List, Optional
 
 from flask import (
     Blueprint,
+    Response,
     abort,
     flash,
     redirect,
@@ -18,6 +20,7 @@ from app.models import (
     Brand,
     Category,
     Certificate,
+    CertificateTest,
     ContactMessage,
     GalleryImage,
     HomeModal,
@@ -25,12 +28,17 @@ from app.models import (
     Product,
     Service,
     Setting,
+    Signature,
     User,
+    new_cert_code,
     unique_slug,
 )
+from app.qr import qr_png
 from app.utils import (
     DEFAULT_LABELS,
+    company_logo_path,
     delete_upload,
+    get_base_url,
     get_settings_by_section,
     save_upload,
 )
@@ -218,13 +226,17 @@ ENTITIES = {
         ],
         columns=[
             {"name": "serial", "label": "Serie"},
+            {"name": "code", "label": "Código"},
             {"name": "client", "label": "Cliente"},
             {"name": "equipment", "label": "Equipo"},
+            {"name": "cert_type", "label": "Tipo", "choices": list(Certificate.TYPES.items())},
+            {"name": "device_type", "label": "Dispositivo", "choices": list(Certificate.DEVICE_TYPES.items())},
+            {"name": "doc_mode", "label": "Modo", "choices": list(Certificate.MODES.items())},
             {"name": "issued_date", "label": "Emitido", "type": "date"},
             {"name": "published", "label": "Publicado", "type": "bool"},
         ],
         order_by="-issued_date",
-        image_fields=["file_url"],
+        image_fields=["file_url", "signature"],
     ),
     "galeria": Entity(
         key="galeria",
@@ -333,11 +345,45 @@ ENTITIES = {
 }
 
 
+SUPERADMIN_AREAS = {"paginas"}
+
+
+def require_superadmin():
+    """Aborta con 403 si el usuario no es Super Admin."""
+    if not current_user.is_superadmin:
+        abort(403)
+
+
 def get_entity(key):
     entity = ENTITIES.get(key)
     if entity is None:
         abort(404)
+    if entity.key in SUPERADMIN_AREAS:
+        require_superadmin()
     return entity
+
+
+def _form_template(entity):
+    if entity.key == "certificados":
+        return "admin/certificate_form.html"
+    return "admin/entity_form.html"
+
+
+def _certificate_patrones_json():
+    """JSON con los equipos ya certificados para autocompletar la tabla de patrones."""
+    import json
+
+    from app.cert_mech import patrones_source
+
+    data = patrones_source(Certificate.query.all())
+    return json.dumps(data, ensure_ascii=False)
+
+
+def _select_signatures():
+    """Firmas disponibles (publicadas primero) para el formulario del certificado."""
+    return Signature.query.order_by(
+        Signature.published.desc(), Signature.order, Signature.name
+    ).all()
 
 
 def apply_defaults(obj, entity):
@@ -440,6 +486,131 @@ def populate_object(obj, entity, form, files):
 
 
 # --------------------------------------------------------------------------
+# Certificados (formulario personalizado con filas dinamicas)
+# --------------------------------------------------------------------------
+CERT_TEXT_FIELDS = [
+    "serial", "client", "client_doc", "client_email", "client_address",
+    "equipment", "equipment_brand", "equipment_model",
+    "uncertainty", "std_wavelength",
+    "test_equipment", "test_brand", "test_model", "test_serial", "test_notes",
+    "certifier", "certifier_role", "notes",
+]
+
+
+def populate_certificate(obj, form, files):
+    """Lee el formulario personalizado de certificados (incluye filas de pruebas)."""
+    obj.cert_type = form.get("cert_type") or "calibracion"
+    obj.device_type = form.get("device_type") or "opm"
+    obj.doc_mode = form.get("doc_mode") or "generar"
+    # El certificado mecanico se identifica por tipo de certificado y dispositivo.
+    if "mecanica" in (obj.cert_type, obj.device_type):
+        obj.cert_type = "mecanica"
+        obj.device_type = "mecanica"
+    # El titulo se deriva del tipo: no se pide al usuario.
+    obj.title = Certificate.TYPES.get(obj.cert_type, "CERTIFICADO")
+
+    for name in CERT_TEXT_FIELDS:
+        if name in form:
+            setattr(obj, name, (form.get(name) or "").strip())
+
+    # Firma elegida de la lista (completa nombre, cargo e imagen).
+    sig_raw = (form.get("signature_id") or "").strip()
+    if sig_raw.isdigit():
+        sig = db.session.get(Signature, int(sig_raw))
+        if sig:
+            obj.signature_id = sig.id
+            if sig.name:
+                obj.certifier = sig.name
+            if sig.role:
+                obj.certifier_role = sig.role
+            if sig.image:
+                obj.signature = sig.image
+    else:
+        obj.signature_id = None
+
+    # Equipos de prueba (patron): lista JSON de texto libre.
+    if "test_equipment_data" in form:
+        import json
+
+        raw_eq = (form.get("test_equipment_data") or "").strip()
+        items = []
+        if raw_eq:
+            try:
+                parsed = json.loads(raw_eq)
+            except (ValueError, TypeError):
+                parsed = None
+            if isinstance(parsed, list):
+                items = [str(x).strip() for x in parsed if str(x).strip()]
+        obj.test_equipment_data = json.dumps(items, ensure_ascii=False) if items else ""
+        obj.test_equipment = items[0] if items else ""
+
+    for name in ("issued_date", "next_date"):
+        raw = (form.get(name) or "").strip()
+        try:
+            setattr(obj, name, datetime.date.fromisoformat(raw) if raw else None)
+        except ValueError:
+            setattr(obj, name, None)
+
+    obj.published = form.get("published") in ("on", "1", "true", "yes")
+
+    upload = files.get("file_url")
+    if upload and getattr(upload, "filename", ""):
+        path = save_upload(upload, subdir="certificados")
+        if path:
+            delete_upload(obj.file_url or "")
+            obj.file_url = path
+
+    signature = files.get("signature")
+    if signature and getattr(signature, "filename", ""):
+        path = save_upload(signature, subdir="certificados")
+        if path:
+            delete_upload(obj.signature or "")
+            obj.signature = path
+
+    if not obj.code:
+        obj.code = new_cert_code()
+
+    # Datos OTDR (JSON). Se normaliza para descartar valores vacios o invalidos.
+    if "otdr_data" in form:
+        from app.cert_otdr import parse_otdr, serialize_otdr
+
+        raw_otdr = (form.get("otdr_data") or "").strip()
+        obj.otdr_data = serialize_otdr(parse_otdr(raw_otdr)) if raw_otdr else ""
+
+    # Datos del certificado de ajuste y calibracion mecanica (JSON).
+    if "mech_data" in form:
+        from app.cert_mech import serialize_mech
+
+        raw_mech = (form.get("mech_data") or "").strip()
+        obj.mech_data = serialize_mech(raw_mech) if raw_mech else ""
+    if obj.device_type != "mecanica":
+        obj.mech_data = None
+
+    obj.tests.clear()
+    indexes = set()
+    for key in form.keys():
+        match = re.match(r"tests-(\d+)-no$", key)
+        if match:
+            indexes.add(int(match.group(1)))
+    for i in sorted(indexes):
+        no = (form.get(f"tests-{i}-no") or "").strip()
+        wavelength = (form.get(f"tests-{i}-wavelength") or "").strip()
+        power = (form.get(f"tests-{i}-power") or "").strip()
+        wavelength_value = (form.get(f"tests-{i}-wavelength_value") or "").strip()
+        approved = form.get(f"tests-{i}-approved", "1") in ("1", "on", "true", "yes")
+        if not any([no, wavelength, power, wavelength_value]):
+            continue
+        obj.tests.append(CertificateTest(
+            test_no=no,
+            wavelength=wavelength,
+            power=power,
+            wavelength_value=wavelength_value,
+            approved=approved,
+            order=i,
+        ))
+
+
+# --------------------------------------------------------------------------
 # Rutas
 # --------------------------------------------------------------------------
 @admin_bp.before_request
@@ -491,8 +662,11 @@ def entity_list(entity_key):
         if clauses:
             query = query.filter(db.or_(*clauses))
 
-    order = _order_clause(entity.model, entity.order_by)
-    pagination = query.order_by(order).paginate(
+    if entity.key == "certificados":
+        orders = (entity.model.issued_date.desc(), entity.model.created_at.desc())
+    else:
+        orders = (_order_clause(entity.model, entity.order_by),)
+    pagination = query.order_by(*orders).paginate(
         page=page, per_page=15, error_out=False
     )
     return render_template(
@@ -501,6 +675,7 @@ def entity_list(entity_key):
         items=pagination.items,
         pagination=pagination,
         q=q,
+        signatures=_select_signatures() if entity.key == "certificados" else [],
     )
 
 
@@ -510,7 +685,10 @@ def entity_create(entity_key):
     obj = entity.model()
 
     if request.method == "POST":
-        populate_object(obj, entity, request.form, request.files)
+        if entity.key == "certificados":
+            populate_certificate(obj, request.form, request.files)
+        else:
+            populate_object(obj, entity, request.form, request.files)
         try:
             db.session.add(obj)
             db.session.commit()
@@ -518,22 +696,26 @@ def entity_create(entity_key):
             db.session.rollback()
             flash("No se pudo guardar el registro. Verifique los datos.", "error")
             return render_template(
-                "admin/entity_form.html",
+                _form_template(entity),
                 entity=entity,
                 obj=obj,
                 fields=resolve_choices(entity),
                 creating=True,
+                patrones_json=_certificate_patrones_json() if entity.key == "certificados" else "",
+                signatures=_select_signatures() if entity.key == "certificados" else [],
             )
         flash(f"{entity.singular.capitalize()} guardado correctamente.", "success")
         return redirect(url_for("admin.entity_list", entity_key=entity.key))
 
     apply_defaults(obj, entity)
     return render_template(
-        "admin/entity_form.html",
+        _form_template(entity),
         entity=entity,
         obj=obj,
         fields=resolve_choices(entity),
         creating=True,
+        patrones_json=_certificate_patrones_json() if entity.key == "certificados" else "",
+        signatures=_select_signatures() if entity.key == "certificados" else [],
     )
 
 
@@ -543,7 +725,10 @@ def entity_edit(entity_key, item_id):
     obj = db.session.get(entity.model, item_id) or abort(404)
 
     if request.method == "POST":
-        populate_object(obj, entity, request.form, request.files)
+        if entity.key == "certificados":
+            populate_certificate(obj, request.form, request.files)
+        else:
+            populate_object(obj, entity, request.form, request.files)
         try:
             db.session.commit()
         except Exception:
@@ -554,11 +739,13 @@ def entity_edit(entity_key, item_id):
         return redirect(url_for("admin.entity_list", entity_key=entity.key))
 
     return render_template(
-        "admin/entity_form.html",
+        _form_template(entity),
         entity=entity,
         obj=obj,
         fields=resolve_choices(entity),
         creating=False,
+        patrones_json=_certificate_patrones_json() if entity.key == "certificados" else "",
+        signatures=_select_signatures() if entity.key == "certificados" else [],
     )
 
 
@@ -580,6 +767,89 @@ def _order_clause(model, order_by):
     col_name = order_by.lstrip("-")
     col = getattr(model, col_name, None) or model.id
     return col.desc() if desc else col.asc()
+
+
+@admin_bp.route("/certificados/<int:item_id>/qr.png")
+def certificate_qr(item_id):
+    cert = db.session.get(Certificate, item_id) or abort(404)
+    base = get_base_url({s.key: s.value for s in Setting.query.all()})
+    verify_url = base + url_for("public.certificate_detail", code=cert.verify_code)
+    png = qr_png(verify_url, logo_path=company_logo_path())
+    if png is None:
+        flash("La generacion de codigos QR no esta disponible.", "error")
+        return redirect(url_for("admin.entity_list", entity_key="certificados"))
+    filename = f"qr-{cert.serial or cert.id}.png".replace(" ", "_")
+    response = Response(png, mimetype="image/png")
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@admin_bp.route("/certificados/<int:item_id>/ticket.png")
+def certificate_ticket(item_id):
+    """Ticket del certificado como imagen (logo, datos y QR), listo para imprimir."""
+    cert = db.session.get(Certificate, item_id) or abort(404)
+    settings = {s.key: s.value for s in Setting.query.all()}
+    base = get_base_url(settings)
+    verify_url = base + url_for("public.certificate_detail", code=cert.verify_code)
+    logo = company_logo_path()
+    qr = qr_png(verify_url, logo_path=logo)
+
+    from app.ticket import build_ticket_png
+
+    png = build_ticket_png(cert, settings, qr_bytes=qr, logo_path=logo)
+    if not png:
+        flash("No se pudo generar el ticket.", "error")
+        return redirect(url_for("admin.entity_list", entity_key="certificados"))
+    response = Response(png, mimetype="image/png")
+    response.headers["Content-Disposition"] = 'inline; filename="ticket.png"'
+    return response
+
+
+# --------------------------------------------------------------------------
+# Firmas (se administran dentro de la vista de certificados)
+# --------------------------------------------------------------------------
+@admin_bp.route("/certificados/firmas/nueva", methods=["POST"])
+def signature_create():
+    name = (request.form.get("name") or "").strip()
+    role = (request.form.get("role") or "").strip()
+    if not name:
+        flash("El nombre de la firma es obligatorio.", "error")
+        return redirect(url_for("admin.entity_list", entity_key="certificados"))
+
+    raw_order = (request.form.get("order") or "").strip()
+    try:
+        order = int(raw_order) if raw_order else 0
+    except ValueError:
+        order = 0
+
+    image = ""
+    upload = request.files.get("image")
+    if upload and getattr(upload, "filename", ""):
+        image = save_upload(upload, subdir="firmas") or ""
+
+    db.session.add(
+        Signature(
+            name=name,
+            role=role,
+            image=image,
+            order=order,
+            published=request.form.get("published") in ("on", "1", "true", "yes"),
+        )
+    )
+    db.session.commit()
+    flash("Firma guardada correctamente.", "success")
+    return redirect(url_for("admin.entity_list", entity_key="certificados"))
+
+
+@admin_bp.route("/certificados/firmas/<int:item_id>/eliminar", methods=["POST"])
+def signature_delete(item_id):
+    sig = db.session.get(Signature, item_id)
+    if sig:
+        delete_upload(sig.image or "")
+        db.session.delete(sig)
+        db.session.commit()
+        flash("Firma eliminada.", "success")
+    return redirect(url_for("admin.entity_list", entity_key="certificados"))
 
 
 # --------------------------------------------------------------------------
@@ -629,9 +899,10 @@ def message_toggle(item_id):
 # --------------------------------------------------------------------------
 @admin_bp.route("/ajustes", methods=["GET", "POST"])
 def settings():
+    require_superadmin()
     if request.method == "POST":
         for row in Setting.query.all():
-            if row.field_type == "image":
+            if row.field_type in ("image", "video"):
                 upload = request.files.get(f"file_{row.key}")
                 if upload and getattr(upload, "filename", ""):
                     path = save_upload(upload, subdir="settings")
@@ -657,6 +928,7 @@ def settings():
 # --------------------------------------------------------------------------
 @admin_bp.route("/textos", methods=["GET", "POST"])
 def textos():
+    require_superadmin()
     if request.method == "POST":
         for key, default in DEFAULT_LABELS.items():
             value = request.form.get(f"label_{key}")
@@ -716,3 +988,114 @@ def profile():
             return redirect(url_for("admin.profile"))
 
     return render_template("admin/profile.html", user=user)
+
+
+# --------------------------------------------------------------------------
+# Usuarios (solo Super Admin; los Super Admin no se listan)
+# --------------------------------------------------------------------------
+@admin_bp.route("/usuarios")
+def users():
+    require_superadmin()
+    items = (
+        User.query.filter(User.role != "superadmin")
+        .order_by(User.created_at.desc(), User.id.desc())
+        .all()
+    )
+    total_superadmins = User.query.filter_by(role="superadmin").count()
+    return render_template(
+        "admin/users.html",
+        items=items,
+        roles=User.ROLES,
+        total_superadmins=total_superadmins,
+    )
+
+
+@admin_bp.route("/usuarios/nuevo", methods=["GET", "POST"])
+def user_create():
+    require_superadmin()
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        email = (request.form.get("email") or "").strip()
+        full_name = (request.form.get("full_name") or "").strip()
+        role = (request.form.get("role") or "admin").strip()
+        password = request.form.get("password") or ""
+        confirm = request.form.get("confirm_password") or ""
+
+        errors = []
+        if role not in User.ROLES:
+            role = "admin"
+        if not username:
+            errors.append("El nombre de usuario es obligatorio.")
+        elif User.query.filter_by(username=username).first():
+            errors.append("Ese nombre de usuario ya existe.")
+        if email and User.query.filter_by(email=email).first():
+            errors.append("Ese correo ya esta registrado.")
+        if len(password) < 8:
+            errors.append("La contrasena debe tener al menos 8 caracteres.")
+        elif password != confirm:
+            errors.append("La contrasena y su confirmacion no coinciden.")
+
+        if errors:
+            for message in errors:
+                flash(message, "error")
+            return render_template(
+                "admin/user_form.html", roles=User.ROLES, form=request.form, creating=True
+            )
+
+        user = User(
+            username=username,
+            email=email or None,
+            full_name=full_name,
+            role=role,
+        )
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        flash("Usuario creado correctamente.", "success")
+        return redirect(url_for("admin.users"))
+
+    return render_template(
+        "admin/user_form.html", roles=User.ROLES, form={}, creating=True
+    )
+
+
+@admin_bp.route("/usuarios/<int:item_id>/password", methods=["POST"])
+def user_password(item_id):
+    require_superadmin()
+    user = db.session.get(User, item_id)
+    if not user or user.role == "superadmin":
+        abort(404)
+    password = request.form.get("new_password") or ""
+    confirm = request.form.get("confirm_password") or ""
+    if len(password) < 8:
+        flash("La contrasena debe tener al menos 8 caracteres.", "error")
+    elif password != confirm:
+        flash("La contrasena y su confirmacion no coinciden.", "error")
+    else:
+        user.set_password(password)
+        db.session.commit()
+        flash(f"Contrasena de {user.username} restablecida.", "success")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/usuarios/<int:item_id>/alternar", methods=["POST"])
+def user_toggle(item_id):
+    require_superadmin()
+    user = db.session.get(User, item_id)
+    if user and user.role != "superadmin":
+        user.is_active_user = not user.is_active_user
+        db.session.commit()
+        estado = "activado" if user.is_active_user else "desactivado"
+        flash(f"Usuario {user.username} {estado}.", "success")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/usuarios/<int:item_id>/eliminar", methods=["POST"])
+def user_delete(item_id):
+    require_superadmin()
+    user = db.session.get(User, item_id)
+    if user and user.role != "superadmin" and user.id != current_user.id:
+        db.session.delete(user)
+        db.session.commit()
+        flash("Usuario eliminado.", "success")
+    return redirect(url_for("admin.users"))

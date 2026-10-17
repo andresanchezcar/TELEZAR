@@ -75,6 +75,29 @@ def init_database(app):
                 db.session.execute(text(ddl))
         db.session.commit()
 
+        _backfill_user_roles()
+
+
+def _backfill_user_roles():
+    """Garantiza que los usuarios tengan rol: el mas antiguo es Super Admin."""
+    if "users" not in db.metadata.tables:
+        return
+    from app.models import User
+
+    users = User.query.order_by(User.id).all()
+    if not users:
+        return
+    changed = False
+    for user in users:
+        if not user.role:
+            user.role = "admin"
+            changed = True
+    if not any(u.role == "superadmin" for u in users):
+        users[0].role = "superadmin"
+        changed = True
+    if changed:
+        db.session.commit()
+
 
 def register_security(app):
     """Cookies seguras y cabeceras de seguridad (sin romper el sitio)."""
@@ -118,6 +141,10 @@ def register_security(app):
 
 
 def register_error_handlers(app):
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template("403.html"), 403
+
     @app.errorhandler(404)
     def not_found(e):
         return render_template("404.html"), 404
@@ -131,7 +158,13 @@ def register_error_handlers(app):
 def register_template_helpers(app):
     from datetime import datetime
 
+    from app.chart import line_chart_svg
+    from app.chart3d import attenuation_data_uri, distance_data_uri
     from app.utils import base_context
+
+    app.jinja_env.globals["line_chart"] = line_chart_svg
+    app.jinja_env.globals["distance_chart_3d"] = distance_data_uri
+    app.jinja_env.globals["attenuation_chart_3d"] = attenuation_data_uri
 
     @app.context_processor
     def inject_globals():

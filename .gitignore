@@ -12,6 +12,9 @@ env/
 # Clave secreta generada automaticamente
 instance/.secret_key
 
+# Cache de graficas generadas (matplotlib)
+instance/chart_cache/
+
 # Subidas de archivos (imágenes administrables)
 app/static/uploads/*
 !app/static/uploads/.gitkeep

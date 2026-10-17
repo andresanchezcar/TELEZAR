@@ -33,9 +33,12 @@
             </ul>
             {% if c.notes %}<p>{{ c.notes }}</p>{% endif %}
           </div>
-          {% if c.file_url %}
-          <a class="btn btn-outline btn-sm" href="{{ c.file_url }}" target="_blank" rel="noopener">{{ t('cert_descargar') }}</a>
-          {% endif %}
+          <div class="cert-actions">
+            <a class="btn btn-primary btn-sm" href="{{ url_for('public.certificate_detail', code=c.verify_code) }}">{{ t('cert_ver') }}</a>
+            {% if c.file_url %}
+            <a class="btn btn-outline btn-sm" href="{{ c.file_url }}" target="_blank" rel="noopener">{{ t('cert_descargar_pdf') }}</a>
+            {% endif %}
+          </div>
         </article>
         {% endfor %}
       </div>

@@ -2,6 +2,17 @@
 {% block title %}{{ settings.get('site_name', 'Telezar Comunicaciones') }} — {{ settings.get('site_tagline', '') }}{% endblock %}
 
 {% block content %}
+{% set home_video = settings.get('home_video') %}
+{% if home_video %}
+<section class="hero-video-full">
+  <video class="hero-bg-video" data-hero-video
+         autoplay muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1">
+    <source src="{{ home_video }}">
+  </video>
+  <span class="hero-scrim" aria-hidden="true"></span>
+</section>
+{% endif %}
+
 <section class="hero">
   <div class="container hero-inner">
     <div class="hero-copy">
